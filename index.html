@@ -1505,7 +1505,7 @@ function HomePage(_ref3) {
       color: t.muted,
       marginBottom: 6
     }
-  }, "Tap an event to log an error or infringement."), /*#__PURE__*/React.createElement("style", null, "@keyframes possFlash { 0%,100%{opacity:1;} 50%{opacity:0.25;} } .poss-flash{animation:possFlash 0.85s ease-in-out infinite;}"), /*#__PURE__*/React.createElement("div", {
+  }, "Select which team has possession and log events."), /*#__PURE__*/React.createElement("style", null, "@keyframes possFlash { 0%,100%{opacity:1;} 50%{opacity:0.25;} } .poss-flash{animation:possFlash 0.85s ease-in-out infinite;}"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -1915,10 +1915,10 @@ function HomePage(_ref3) {
         });
         setOtherEvents(function (ev) {
           return [].concat(_toConsumableArray(ev), [{
-            type: "Positive",
+            type: "+",
             player: player,
             stamp: getStamp(),
-            detail: "positive involvement"
+            half: halfHalf
           }]);
         });
       },
@@ -1947,10 +1947,10 @@ function HomePage(_ref3) {
         });
         setOtherEvents(function (ev) {
           return [].concat(_toConsumableArray(ev), [{
-            type: "Negative",
+            type: "-",
             player: player,
             stamp: getStamp(),
-            detail: "negative involvement"
+            half: halfHalf
           }]);
         });
       },
@@ -3303,26 +3303,11 @@ function MatchPage(_ref15) {
     var c = function c(pred) {
       return otherEvents.filter(pred).length;
     };
-    var ss = function ss(pred, half) {
-      return scoreHistory.filter(function (e) {
-        return pred(e) && e.half === half;
-      }).length;
-    };
-    var sc = function sc(pred) {
-      return scoreHistory.filter(pred).length;
-    };
     var hs = function hs(pred) {
       return {
         h1: h(pred, 1),
         h2: h(pred, 2),
         tot: c(pred)
-      };
-    };
-    var hss = function hss(pred) {
-      return {
-        h1: ss(pred, 1),
-        h2: ss(pred, 2),
-        tot: sc(pred)
       };
     };
     var penW = hs(function (e) {
@@ -3373,24 +3358,28 @@ function MatchPage(_ref15) {
     var loL = hs(function (e) {
       return e.type === "L/Out L";
     });
-    var tryW = hss(function (e) {
-      return e.team === "bjru" && e.type === "Try";
+
+    // All won/lost events for Total Turnovers
+    var allWon = otherEvents.filter(function (e) {
+      return e.won === true;
     });
-    var tryL = hss(function (e) {
-      return e.team === "oppo" && e.type === "Try";
+    var allLost = otherEvents.filter(function (e) {
+      return e.won === false;
     });
-    var cvW = hss(function (e) {
-      return e.team === "bjru" && e.type === "Conv";
-    });
-    var cvL = hss(function (e) {
-      return e.team === "oppo" && e.type === "Conv";
-    });
-    var tW1 = penW.h1 + fkW.h1 + htW.h1 + koW.h1 + fpW.h1 + osW.h1 + scrW.h1 + loW.h1 + tryW.h1 + cvW.h1;
-    var tW2 = penW.h2 + fkW.h2 + htW.h2 + koW.h2 + fpW.h2 + osW.h2 + scrW.h2 + loW.h2 + tryW.h2 + cvW.h2;
-    var tL1 = penL.h1 + fkL.h1 + htL.h1 + koL.h1 + fpL.h1 + osL.h1 + scrL.h1 + loL.h1 + tryL.h1 + cvL.h1;
-    var tL2 = penL.h2 + fkL.h2 + htL.h2 + koL.h2 + fpL.h2 + osL.h2 + scrL.h2 + loL.h2 + tryL.h2 + cvL.h2;
-    var tW = penW.tot + fkW.tot + htW.tot + koW.tot + fpW.tot + osW.tot + scrW.tot + loW.tot + tryW.tot + cvW.tot;
-    var tL = penL.tot + fkL.tot + htL.tot + koL.tot + fpL.tot + osL.tot + scrL.tot + loL.tot + tryL.tot + cvL.tot;
+    var twH1 = allWon.filter(function (e) {
+      return e.half === 1;
+    }).length;
+    var twH2 = allWon.filter(function (e) {
+      return e.half === 2;
+    }).length;
+    var tlH1 = allLost.filter(function (e) {
+      return e.half === 1;
+    }).length;
+    var tlH2 = allLost.filter(function (e) {
+      return e.half === 2;
+    }).length;
+    var twTot = allWon.length;
+    var tlTot = allLost.length;
     var FS = 13;
     var SH = function SH(_ref16) {
       var label = _ref16.label;
@@ -3623,16 +3612,6 @@ function MatchPage(_ref15) {
       lW: osW,
       rLabel: "Offside Lost",
       rL: osL
-    }), /*#__PURE__*/React.createElement(Row, {
-      lLabel: "Tries",
-      lW: tryW,
-      rLabel: "Tries",
-      rL: tryL
-    }), /*#__PURE__*/React.createElement(Row, {
-      lLabel: "Conv",
-      lW: cvW,
-      rLabel: "Opp Conv",
-      rL: cvL
     }), /*#__PURE__*/React.createElement(SH, {
       label: "Set Piece"
     }), /*#__PURE__*/React.createElement(Row, {
@@ -3645,36 +3624,7 @@ function MatchPage(_ref15) {
       lW: loW,
       rLabel: "L/Out L",
       rL: loL
-    }), /*#__PURE__*/React.createElement(SH, {
-      label: "Involvements"
-    }), function () {
-      var ih = function ih(type, half) {
-        return otherEvents.filter(function (e) {
-          return e.type === type && e.half === half;
-        }).length;
-      };
-      var ic = function ic(type) {
-        return otherEvents.filter(function (e) {
-          return e.type === type;
-        }).length;
-      };
-      var posW = {
-        h1: ih("+", 1),
-        h2: ih("+", 2),
-        tot: ic("+")
-      };
-      var negW = {
-        h1: ih("-", 1),
-        h2: ih("-", 2),
-        tot: ic("-")
-      };
-      return /*#__PURE__*/React.createElement(Row, {
-        lLabel: "Positives",
-        lW: posW,
-        rLabel: "Negatives",
-        rL: negW
-      });
-    }(), /*#__PURE__*/React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -3697,7 +3647,7 @@ function MatchPage(_ref15) {
         width: 22,
         textAlign: "center"
       }
-    }, tW1), /*#__PURE__*/React.createElement("span", {
+    }, twH1), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: FS,
         fontWeight: 900,
@@ -3707,14 +3657,14 @@ function MatchPage(_ref15) {
         textAlign: "center",
         opacity: 0.55
       }
-    }, tW2), /*#__PURE__*/React.createElement("span", {
+    }, twH2), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9,
         color: t.gold,
         fontWeight: 700,
         marginLeft: 3
       }
-    }, "TOTAL")), /*#__PURE__*/React.createElement("div", {
+    }, "Turnovers Won")), /*#__PURE__*/React.createElement("div", {
       style: {
         width: 30,
         textAlign: "center"
@@ -3726,7 +3676,7 @@ function MatchPage(_ref15) {
         color: t.muted,
         fontFamily: "monospace"
       }
-    }, tW + tL)), /*#__PURE__*/React.createElement("div", {
+    }, twTot + tlTot)), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         display: "flex",
@@ -3741,7 +3691,7 @@ function MatchPage(_ref15) {
         fontWeight: 700,
         marginRight: 3
       }
-    }, "TOTAL"), /*#__PURE__*/React.createElement("span", {
+    }, "Turnovers Lost"), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: FS,
         fontWeight: 900,
@@ -3751,7 +3701,7 @@ function MatchPage(_ref15) {
         textAlign: "center",
         opacity: 0.55
       }
-    }, tL1), /*#__PURE__*/React.createElement("span", {
+    }, tlH1), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: FS,
         fontWeight: 900,
@@ -3760,7 +3710,462 @@ function MatchPage(_ref15) {
         width: 22,
         textAlign: "center"
       }
-    }, tL2))));
+    }, tlH2))));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 4,
+      marginBottom: 6
+    }
+  }, "Score Events"), function () {
+    var ss = function ss(pred, half) {
+      return scoreHistory.filter(function (e) {
+        return pred(e) && e.half === half;
+      }).length;
+    };
+    var sc = function sc(pred) {
+      return scoreHistory.filter(pred).length;
+    };
+    var hss = function hss(pred) {
+      return {
+        h1: ss(pred, 1),
+        h2: ss(pred, 2),
+        tot: sc(pred)
+      };
+    };
+    var tryW = hss(function (e) {
+      return e.team === "bjru" && e.type === "Try";
+    });
+    var tryL = hss(function (e) {
+      return e.team === "oppo" && e.type === "Try";
+    });
+    var cvW = hss(function (e) {
+      return e.team === "bjru" && e.type === "Conv";
+    });
+    var cvL = hss(function (e) {
+      return e.team === "oppo" && e.type === "Conv";
+    });
+    var FS = 13;
+    var SH = function SH(_ref18) {
+      var label = _ref18.label;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "4px 8px",
+          backgroundColor: t.surface,
+          borderBottom: "1px solid ".concat(t.border)
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          fontWeight: 700,
+          color: t.gold,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase"
+        }
+      }, label));
+    };
+    var ColH = function ColH() {
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          padding: "3px 8px",
+          backgroundColor: t.surface,
+          borderBottom: "1px solid ".concat(t.border)
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 30,
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 7,
+          color: t.muted,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase"
+        }
+      }, "Total")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      }), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2")));
+    };
+    var Row = function Row(_ref19) {
+      var lLabel = _ref19.lLabel,
+        lW = _ref19.lW,
+        rLabel = _ref19.rLabel,
+        rL = _ref19.rL;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          borderBottom: "1px solid ".concat(t.border),
+          padding: "6px 8px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: 2
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.gold,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center"
+        }
+      }, lW.h1), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.gold,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center",
+          opacity: 0.55
+        }
+      }, lW.h2), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: t.gold,
+          marginLeft: 3,
+          flex: 1
+        }
+      }, lLabel)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 30,
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.muted,
+          fontFamily: "monospace"
+        }
+      }, lW.tot + rL.tot)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 2
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: t.muted,
+          marginRight: 3,
+          flex: 1,
+          textAlign: "right"
+        }
+      }, rLabel), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.text,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center",
+          opacity: 0.55
+        }
+      }, rL.h1), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.text,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center"
+        }
+      }, rL.h2)));
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: t.card,
+        border: "1px solid ".concat(t.border),
+        borderRadius: 8,
+        overflow: "hidden",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement(ColH, null), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Wolves Tries",
+      lW: tryW,
+      rLabel: "Opp Tries",
+      rL: tryL
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Wolves Conv",
+      lW: cvW,
+      rLabel: "Opp Conv",
+      rL: cvL
+    }));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 4,
+      marginBottom: 6
+    }
+  }, "Player Involvements"), function () {
+    var ih = function ih(type, half) {
+      return otherEvents.filter(function (e) {
+        return e.type === type && e.half === half;
+      }).length;
+    };
+    var ic = function ic(type) {
+      return otherEvents.filter(function (e) {
+        return e.type === type;
+      }).length;
+    };
+    var posW = {
+      h1: ih("+", 1),
+      h2: ih("+", 2),
+      tot: ic("+")
+    };
+    var negL = {
+      h1: ih("-", 1),
+      h2: ih("-", 2),
+      tot: ic("-")
+    };
+    var FS = 13;
+    var ColH = function ColH() {
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          padding: "3px 8px",
+          backgroundColor: t.surface,
+          borderBottom: "1px solid ".concat(t.border)
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 30,
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 7,
+          color: t.muted,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase"
+        }
+      }, "Total")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      }), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2")));
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: t.card,
+        border: "1px solid ".concat(t.border),
+        borderRadius: 8,
+        overflow: "hidden",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement(ColH, null), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        padding: "6px 8px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        gap: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: FS,
+        fontWeight: 700,
+        color: t.gold,
+        fontFamily: "monospace",
+        width: 22,
+        textAlign: "center"
+      }
+    }, posW.h1), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: FS,
+        fontWeight: 700,
+        color: t.gold,
+        fontFamily: "monospace",
+        width: 22,
+        textAlign: "center",
+        opacity: 0.55
+      }
+    }, posW.h2), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: t.gold,
+        marginLeft: 3,
+        flex: 1
+      }
+    }, "Positives")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 30,
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: FS,
+        fontWeight: 700,
+        color: t.muted,
+        fontFamily: "monospace"
+      }
+    }, posW.tot + negL.tot)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        color: t.muted,
+        marginRight: 3,
+        flex: 1,
+        textAlign: "right"
+      }
+    }, "Negatives"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: FS,
+        fontWeight: 700,
+        color: t.text,
+        fontFamily: "monospace",
+        width: 22,
+        textAlign: "center",
+        opacity: 0.55
+      }
+    }, negL.h1), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: FS,
+        fontWeight: 700,
+        color: t.text,
+        fontFamily: "monospace",
+        width: 22,
+        textAlign: "center"
+      }
+    }, negL.h2))));
   }(), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
@@ -3835,12 +4240,12 @@ function MatchPage(_ref15) {
 
     // Render symbols
     var symbols = [];
-    Object.entries(byMinute).forEach(function (_ref18) {
-      var _ref19 = _slicedToArray(_ref18, 2),
-        min = _ref19[0],
-        _ref19$ = _ref19[1],
-        won = _ref19$.won,
-        lost = _ref19$.lost;
+    Object.entries(byMinute).forEach(function (_ref20) {
+      var _ref21 = _slicedToArray(_ref20, 2),
+        min = _ref21[0],
+        _ref21$ = _ref21[1],
+        won = _ref21$.won,
+        lost = _ref21$.lost;
       var x = xScale(parseInt(min));
       // Won events stack ABOVE midY
       won.forEach(function (e, i) {
@@ -3969,11 +4374,11 @@ function MatchPage(_ref15) {
         marginTop: 4,
         flexWrap: "wrap"
       }
-    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref20) {
-      var _ref21 = _slicedToArray(_ref20, 3),
-        sym = _ref21[0],
-        col = _ref21[1],
-        label = _ref21[2];
+    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref22) {
+      var _ref23 = _slicedToArray(_ref22, 3),
+        sym = _ref23[0],
+        col = _ref23[1],
+        label = _ref23[2];
       return /*#__PURE__*/React.createElement("div", {
         key: label,
         style: {
@@ -3993,6 +4398,329 @@ function MatchPage(_ref15) {
         }
       }, label));
     })));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 20,
+      marginBottom: 6
+    }
+  }, "Effort Chart"), function () {
+    var WINDOW = 5; // 5-minute buckets
+    var BUCKETS = 8; // 8 x 5min = 40min
+    var posEvents = otherEvents.filter(function (e) {
+      return e.type === "+" && e.stamp;
+    });
+    var negEvents = otherEvents.filter(function (e) {
+      return e.type === "-" && e.stamp;
+    });
+
+    // Parse stamp e.g. "14'" → 14
+    var parseMin = function parseMin(stamp) {
+      var m = parseInt(stamp);
+      return isNaN(m) ? 0 : m;
+    };
+
+    // Build buckets: index 0=0-4', 1=5-9', ... 7=35-39'
+    // For H2 events we offset by 20 (assuming 20min halves)
+    var getMinute = function getMinute(e) {
+      var base = parseMin(e.stamp);
+      return e.half === 2 ? base + 20 : base;
+    };
+    var posBuckets = Array(BUCKETS).fill(0);
+    var negBuckets = Array(BUCKETS).fill(0);
+    posEvents.forEach(function (e) {
+      var min = Math.min(getMinute(e), 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) posBuckets[bucket]++;
+    });
+    negEvents.forEach(function (e) {
+      var min = Math.min(getMinute(e), 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) negBuckets[bucket]++;
+    });
+    var maxVal = Math.max.apply(Math, [1].concat(_toConsumableArray(posBuckets), _toConsumableArray(negBuckets)));
+    var BAR_MAX_H = 36;
+    var CHART_W = 280;
+    var BUCKET_W = CHART_W / BUCKETS;
+    var BAR_W = BUCKET_W * 0.55;
+    var MID_Y = 46;
+
+    // Avg time between positive involvements per half
+    var h1Pos = posEvents.filter(function (e) {
+      return e.half === 1;
+    }).sort(function (a, b) {
+      return parseMin(a.stamp) - parseMin(b.stamp);
+    });
+    var h2Pos = posEvents.filter(function (e) {
+      return e.half === 2;
+    }).sort(function (a, b) {
+      return parseMin(a.stamp) - parseMin(b.stamp);
+    });
+    var avgGap = function avgGap(arr) {
+      if (arr.length < 2) return null;
+      var total = 0;
+      for (var i = 1; i < arr.length; i++) total += parseMin(arr[i].stamp) - parseMin(arr[i - 1].stamp);
+      return (total / (arr.length - 1)).toFixed(1);
+    };
+    var h1Gap = avgGap(h1Pos);
+    var h2Gap = avgGap(h2Pos);
+    var totalPos = posEvents.length;
+    var totalNeg = negEvents.length;
+    if (totalPos === 0 && totalNeg === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: "#1a1a1a",
+        border: "1px solid #2a2a2a",
+        borderRadius: 8,
+        padding: 16,
+        textAlign: "center",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "#555"
+      }
+    }, "No involvement events yet."));
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: "#1a1a1a",
+        border: "1px solid #2a2a2a",
+        borderRadius: 8,
+        padding: "12px 10px",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      viewBox: "0 0 " + (CHART_W + 20) + " 110",
+      style: {
+        display: "block",
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "16",
+      y1: MID_Y,
+      x2: CHART_W + 16,
+      y2: MID_Y,
+      stroke: "#2a2a2a",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: 16 + CHART_W / 2,
+      y1: "0",
+      x2: 16 + CHART_W / 2,
+      y2: "100",
+      stroke: "#F5A800",
+      strokeWidth: "1",
+      strokeDasharray: "3,3",
+      opacity: "0.4"
+    }), posBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("rect", {
+        key: "p" + i,
+        x: x,
+        y: MID_Y - h,
+        width: BAR_W,
+        height: h,
+        fill: "#F5A800",
+        opacity: "0.85",
+        rx: "2"
+      });
+    }), negBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("rect", {
+        key: "n" + i,
+        x: x,
+        y: MID_Y,
+        width: BAR_W,
+        height: h,
+        fill: "#e03535",
+        opacity: "0.8",
+        rx: "2"
+      });
+    }), posBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("text", {
+        key: "pl" + i,
+        x: x,
+        y: MID_Y - h - 3,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#F5A800",
+        fontFamily: "monospace"
+      }, val);
+    }), negBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("text", {
+        key: "nl" + i,
+        x: x,
+        y: MID_Y + h + 9,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#e03535",
+        fontFamily: "monospace"
+      }, val);
+    }), [0, 5, 10, 15, "HT", 25, 30, 35, 40].map(function (label, i) {
+      return /*#__PURE__*/React.createElement("text", {
+        key: "xl" + i,
+        x: 16 + i * BUCKET_W * (i < 4 ? 1 : 1),
+        y: "108",
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: label === "HT" ? "#F5A800" : "#444",
+        fontFamily: "monospace",
+        opacity: label === "HT" ? 0.7 : 1
+      }, label);
+    }), /*#__PURE__*/React.createElement("text", {
+      x: "12",
+      y: MID_Y - BAR_MAX_H + 4,
+      textAnchor: "end",
+      fontSize: "7",
+      fill: "#444",
+      fontFamily: "monospace"
+    }, "+"), /*#__PURE__*/React.createElement("text", {
+      x: "12",
+      y: MID_Y + BAR_MAX_H - 2,
+      textAnchor: "end",
+      fontSize: "7",
+      fill: "#444",
+      fontFamily: "monospace"
+    }, "\u2212")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 12,
+        marginTop: 4,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 9,
+        color: "#888"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        backgroundColor: "#F5A800",
+        borderRadius: 2
+      }
+    }), "Positive"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 9,
+        color: "#888"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        backgroundColor: "#e03535",
+        borderRadius: 2
+      }
+    }), "Negative")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2a2a2a",
+        paddingTop: 8,
+        display: "flex",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Avg gap \xB7 1st Half"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: "#F5A800",
+        fontFamily: "monospace"
+      }
+    }, h1Gap ? h1Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, h1Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Avg gap \xB7 2nd Half"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: "#F5A800",
+        fontFamily: "monospace"
+      }
+    }, h2Gap ? h2Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, h2Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Net effort"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: totalPos > totalNeg ? "#2a9a44" : totalPos < totalNeg ? "#e03535" : "#888",
+        fontFamily: "monospace"
+      }
+    }, totalPos > totalNeg ? "+" : "", totalPos - totalNeg), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, totalPos, "+ \xB7 ", totalNeg, "\u2212"))));
   }(), /*#__PURE__*/React.createElement(AccordionSection, {
     title: "Scoring Events".concat(scoreHistory.length > 0 ? " (" + scoreHistory.length + ")" : ""),
     subtitle: "All tries and conversions logged",
@@ -4143,8 +4871,8 @@ function MatchPage(_ref15) {
     }, e.stamp));
   })));
 }
-function ConcussionPage(_ref22) {
-  var ctx = _ref22.ctx;
+function ConcussionPage(_ref24) {
+  var ctx = _ref24.ctx;
   var t = ctx.t,
     darkMode = ctx.darkMode,
     expandedStep = ctx.expandedStep,
@@ -5079,8 +5807,8 @@ function Breakdown() {
     if (awaitConv) setAwaitConv(null);
   };
   var generateSummary = /*#__PURE__*/function () {
-    var _ref23 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
-      var onFieldCount, playerMins, scorerLog, finalScore, penWon, penLost, fkWon, fkLost, disciplineLog, missedConv, positiveInvolvements, involvementsLog, interchangeSummary, extraPlayersList, prompt, _data$content, res, data, _t;
+    var _ref25 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
+      var onFieldCount, playerMins, scorerLog, finalScore, penWon, penLost, fkWon, fkLost, disciplineLog, missedConv, smTurnoverWon, smTurnoverLost, smPosInv, positiveInvolvements, involvementsLog, interchangeSummary, extraPlayersList, prompt, _data$content, res, data, _t;
       return _regenerator().w(function (_context) {
         while (1) switch (_context.p = _context.n) {
           case 0:
@@ -5113,18 +5841,27 @@ function Breakdown() {
             disciplineLog = "Pen Won: ".concat(penWon, ", FK Won: ").concat(fkWon, ", Pen Lost: ").concat(penLost, ", FK Lost: ").concat(fkLost); // Missed conversions (BJRU)
             missedConv = scoreHistory.filter(function (e) {
               return e.team === "bjru" && e.type === "Miss";
+            }).length;
+            smTurnoverWon = otherEvents.filter(function (e) {
+              return e.won === true;
+            }).length;
+            smTurnoverLost = otherEvents.filter(function (e) {
+              return e.won === false;
+            }).length;
+            smPosInv = otherEvents.filter(function (e) {
+              return e.type === "+";
             }).length; // Positive involvements — player names only for match summary (no counts)
-            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref24) {
-              var _ref25 = _slicedToArray(_ref24, 2),
-                p = _ref25[0],
-                v = _ref25[1];
-              return v > 0;
-            }).sort(function (a, b) {
-              return b[1] - a[1];
-            }).map(function (_ref26) {
+            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref26) {
               var _ref27 = _slicedToArray(_ref26, 2),
                 p = _ref27[0],
                 v = _ref27[1];
+              return v > 0;
+            }).sort(function (a, b) {
+              return b[1] - a[1];
+            }).map(function (_ref28) {
+              var _ref29 = _slicedToArray(_ref28, 2),
+                p = _ref29[0],
+                v = _ref29[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return name;
             });
@@ -5136,7 +5873,7 @@ function Breakdown() {
             extraPlayersList = [extraNames.extra1, extraNames.extra2].filter(Boolean).join(", ") || "none";
             prompt = "You are writing a brief, upbeat match summary for the Balmain U11 rugby team known as the Wolves. Write in a warm, encouraging tone appropriate for under-11s. Maximum 100 words. Use only the information provided \u2014 do not invent scores, opponents or events not mentioned. Focus on positives. Always refer to the team as \"the Wolves\" (never \"BJRU\"). Refer to the opposition by their name from the setup field.\n\nInformation available:\n- Opposition: ".concat(oppoName || "not recorded", "\n- Location: ").concat(locationWeather || "not recorded", "\n- Kick-off time: ").concat(gameTime || "not recorded", "\n- Weather: ").concat(weather || "not recorded", "\n- Pre-game notes: ").concat(preGameNotes || "not recorded", "\n- Captain: ").concat(captain || "not recorded", "\n- Starting subs: ").concat(startingSubs.filter(function (s) {
               return s;
-            }).join(", ") || "not recorded", "\n- Additional players: ").concat(extraPlayersList, "\n- Final score: ").concat(finalScore, "\n- Scoring events: ").concat(scorerLog, "\n- Missed conversions (BJRU): ").concat(missedConv, "\n- Discipline: ").concat(disciplineLog, "\n- Players who made positive contributions (names only, no counts): ").concat(involvementsLog, "\n- Interchange summary: ").concat(interchangeSummary, "\n- 1st half positives: ").concat(positives || "not recorded", "\n- 2nd half positives: ").concat(positives2 || "not recorded", "\n- 1st half work-ons: ").concat(workOns || "not recorded", "\n- 2nd half work-ons: ").concat(workOns2 || "not recorded", "\n- 1st half opposition notes: ").concat(opposition || "not recorded", "\n- 2nd half opposition notes: ").concat(opposition2 || "not recorded", "\n- 1st half game plan: ").concat(gamePlan || "not recorded", "\n- 2nd half game plan: ").concat(gamePlan2 || "not recorded", "\n- 1st half highlights: ").concat(highlights || "not recorded", "\n- 2nd half highlights: ").concat(highlights2 || "not recorded", "\n- Man of the Match: ").concat(motm || "not selected").concat(motmReason ? " \u2014 ".concat(motmReason) : "", "\n\nWrite a single paragraph summary. No title needed. Positive, specific where possible, and suitable to share with parents.");
+            }).join(", ") || "not recorded", "\n- Additional players: ").concat(extraPlayersList, "\n- Final score: ").concat(finalScore, "\n- Scoring events: ").concat(scorerLog, "\n- Missed conversions (BJRU): ").concat(missedConv, "\n- Discipline: ").concat(disciplineLog, "\n- Players who made positive contributions (names only, no counts): ").concat(involvementsLog, "\n- Overall team effort (positive involvements): ").concat(smPosInv, "\n- Interchange summary: ").concat(interchangeSummary, "\n- 1st half positives: ").concat(positives || "not recorded", "\n- 2nd half positives: ").concat(positives2 || "not recorded", "\n- 1st half work-ons: ").concat(workOns || "not recorded", "\n- 2nd half work-ons: ").concat(workOns2 || "not recorded", "\n- 1st half opposition notes: ").concat(opposition || "not recorded", "\n- 2nd half opposition notes: ").concat(opposition2 || "not recorded", "\n- 1st half game plan: ").concat(gamePlan || "not recorded", "\n- 2nd half game plan: ").concat(gamePlan2 || "not recorded", "\n- 1st half highlights: ").concat(highlights || "not recorded", "\n- 2nd half highlights: ").concat(highlights2 || "not recorded", "\n- Man of the Match: ").concat(motm || "not selected").concat(motmReason ? " \u2014 ".concat(motmReason) : "", "\n\nWrite a single paragraph summary. No title needed. Positive, specific where possible, and suitable to share with parents.");
             _context.p = 1;
             _context.n = 2;
             return fetch("/api", {
@@ -5174,12 +5911,12 @@ function Breakdown() {
       }, _callee, null, [[1, 4]]);
     }));
     return function generateSummary(_x) {
-      return _ref23.apply(this, arguments);
+      return _ref25.apply(this, arguments);
     };
   }();
   var generateCoachesReport = /*#__PURE__*/function () {
-    var _ref28 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
-      var scorerLog, finalScore, parseMin, isFirstHalf, c, h1, h2, halfStats, h1s, h2s, halfSplit, scrumReasons, loutReasons, scrumDetail, loutDetail, reasonCounts, reasonSummary, penWon, penLost, fkWon, fkLost, scrumW, scrumL, loutW, loutL, bjruPossSecs, oppoPossSecs, totalPoss, possessionStr, possessionChanges, scoreProgression, missedConvBjru, missedConvOppo, workloadEntries, workloadSummary, sinBinEvents, initial, positivePlayers, involvementsLog, extraPlayersList, captainInitial, prompt, _data$content2, res, data, _t2;
+    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+      var scorerLog, finalScore, parseMin, isFirstHalf, c, h1, h2, halfStats, h1s, h2s, halfSplit, scrumReasons, loutReasons, scrumDetail, loutDetail, reasonCounts, reasonSummary, allWonEvents, allLostEvents, turnoverWonH1, turnoverWonH2, turnoverLostH1, turnoverLostH2, turnoverWonTotal, turnoverLostTotal, turnoverStr, teamPosH1, teamPosH2, teamNegH1, teamNegH2, teamEffortStr, parseMinCR, crPosH1, crPosH2, avgGapCR, h1GapCR, h2GapCR, effortGapStr, penWon, penLost, fkWon, fkLost, scrumW, scrumL, loutW, loutL, bjruPossSecs, oppoPossSecs, totalPoss, possessionStr, possessionChanges, scoreProgression, missedConvBjru, missedConvOppo, workloadEntries, workloadSummary, sinBinEvents, initial, positivePlayers, involvementsLog, extraPlayersList, captainInitial, prompt, _data$content2, res, data, _t2;
       return _regenerator().w(function (_context2) {
         while (1) switch (_context2.p = _context2.n) {
           case 0:
@@ -5246,16 +5983,16 @@ function Breakdown() {
                 loutReasons[_k] = (loutReasons[_k] || 0) + 1;
               }
             });
-            scrumDetail = Object.entries(scrumReasons).map(function (_ref29) {
-              var _ref30 = _slicedToArray(_ref29, 2),
-                k = _ref30[0],
-                v = _ref30[1];
-              return "".concat(k, ": ").concat(v);
-            }).join(", ") || "no detail";
-            loutDetail = Object.entries(loutReasons).map(function (_ref31) {
+            scrumDetail = Object.entries(scrumReasons).map(function (_ref31) {
               var _ref32 = _slicedToArray(_ref31, 2),
                 k = _ref32[0],
                 v = _ref32[1];
+              return "".concat(k, ": ").concat(v);
+            }).join(", ") || "no detail";
+            loutDetail = Object.entries(loutReasons).map(function (_ref33) {
+              var _ref34 = _slicedToArray(_ref33, 2),
+                k = _ref34[0],
+                v = _ref34[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "no detail"; // ── Discipline breakdown by reason (full) ───────────────────────────────
             reasonCounts = {};
@@ -5265,12 +6002,69 @@ function Breakdown() {
                 reasonCounts[key] = (reasonCounts[key] || 0) + 1;
               }
             });
-            reasonSummary = Object.entries(reasonCounts).map(function (_ref33) {
-              var _ref34 = _slicedToArray(_ref33, 2),
-                k = _ref34[0],
-                v = _ref34[1];
+            reasonSummary = Object.entries(reasonCounts).map(function (_ref35) {
+              var _ref36 = _slicedToArray(_ref35, 2),
+                k = _ref36[0],
+                v = _ref36[1];
               return "".concat(k, ": ").concat(v);
-            }).join(", ") || "none recorded"; // ── Sanction counts (overall) ───────────────────────────────────────────
+            }).join(", ") || "none recorded"; // ── Turnover totals ─────────────────────────────────────────────────────
+            allWonEvents = otherEvents.filter(function (e) {
+              return e.won === true;
+            });
+            allLostEvents = otherEvents.filter(function (e) {
+              return e.won === false;
+            });
+            turnoverWonH1 = allWonEvents.filter(function (e) {
+              return e.half === 1;
+            }).length;
+            turnoverWonH2 = allWonEvents.filter(function (e) {
+              return e.half === 2;
+            }).length;
+            turnoverLostH1 = allLostEvents.filter(function (e) {
+              return e.half === 1;
+            }).length;
+            turnoverLostH2 = allLostEvents.filter(function (e) {
+              return e.half === 2;
+            }).length;
+            turnoverWonTotal = allWonEvents.length;
+            turnoverLostTotal = allLostEvents.length;
+            turnoverStr = "Won: H1 " + turnoverWonH1 + " H2 " + turnoverWonH2 + " Total " + turnoverWonTotal + " / Lost: H1 " + turnoverLostH1 + " H2 " + turnoverLostH2 + " Total " + turnoverLostTotal; // ── Team involvement totals ──────────────────────────────────────────────
+            teamPosH1 = otherEvents.filter(function (e) {
+              return e.type === "+" && e.half === 1;
+            }).length;
+            teamPosH2 = otherEvents.filter(function (e) {
+              return e.type === "+" && e.half === 2;
+            }).length;
+            teamNegH1 = otherEvents.filter(function (e) {
+              return e.type === "-" && e.half === 1;
+            }).length;
+            teamNegH2 = otherEvents.filter(function (e) {
+              return e.type === "-" && e.half === 2;
+            }).length;
+            teamEffortStr = "Positive: H1 " + teamPosH1 + " H2 " + teamPosH2 + " / Negative: H1 " + teamNegH1 + " H2 " + teamNegH2; // Avg gap between positive involvements per half
+            parseMinCR = function parseMinCR(stamp) {
+              var m = parseInt(stamp);
+              return isNaN(m) ? 0 : m;
+            };
+            crPosH1 = otherEvents.filter(function (e) {
+              return e.type === "+" && e.half === 1 && e.stamp;
+            }).sort(function (a, b) {
+              return parseMinCR(a.stamp) - parseMinCR(b.stamp);
+            });
+            crPosH2 = otherEvents.filter(function (e) {
+              return e.type === "+" && e.half === 2 && e.stamp;
+            }).sort(function (a, b) {
+              return parseMinCR(a.stamp) - parseMinCR(b.stamp);
+            });
+            avgGapCR = function avgGapCR(arr) {
+              if (arr.length < 2) return null;
+              var total = 0;
+              for (var i = 1; i < arr.length; i++) total += parseMinCR(arr[i].stamp) - parseMinCR(arr[i - 1].stamp);
+              return (total / (arr.length - 1)).toFixed(1);
+            };
+            h1GapCR = avgGapCR(crPosH1);
+            h2GapCR = avgGapCR(crPosH2);
+            effortGapStr = "H1 avg gap: " + (h1GapCR ? h1GapCR + "min" : "insufficient data") + ", H2 avg gap: " + (h2GapCR ? h2GapCR + "min" : "insufficient data"); // ── Sanction counts (overall) ───────────────────────────────────────────
             penWon = otherEvents.filter(function (e) {
               return e.sanction === "Penalty" && e.won;
             }).length;
@@ -5319,10 +6113,10 @@ function Breakdown() {
             missedConvOppo = scoreHistory.filter(function (e) {
               return e.team === "oppo" && e.type === "Miss";
             }).length; // ── Player workload ─────────────────────────────────────────────────────
-            workloadEntries = Object.entries(playerTimers).map(function (_ref35) {
-              var _ref36 = _slicedToArray(_ref35, 2),
-                p = _ref36[0],
-                pt = _ref36[1];
+            workloadEntries = Object.entries(playerTimers).map(function (_ref37) {
+              var _ref38 = _slicedToArray(_ref37, 2),
+                p = _ref38[0],
+                pt = _ref38[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || null : p;
               if (!name) return null;
               var init = name[0] ? name[0].toUpperCase() + "." : "?";
@@ -5337,17 +6131,17 @@ function Breakdown() {
             initial = function initial(name) {
               return name && name[0] ? name[0].toUpperCase() + "." : "?";
             };
-            positivePlayers = Object.entries(playerImpact).filter(function (_ref37) {
-              var _ref38 = _slicedToArray(_ref37, 2),
-                p = _ref38[0],
-                v = _ref38[1];
-              return v > 0;
-            }).sort(function (a, b) {
-              return b[1] - a[1];
-            }).map(function (_ref39) {
+            positivePlayers = Object.entries(playerImpact).filter(function (_ref39) {
               var _ref40 = _slicedToArray(_ref39, 2),
                 p = _ref40[0],
                 v = _ref40[1];
+              return v > 0;
+            }).sort(function (a, b) {
+              return b[1] - a[1];
+            }).map(function (_ref41) {
+              var _ref42 = _slicedToArray(_ref41, 2),
+                p = _ref42[0],
+                v = _ref42[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return "".concat(initial(name), " (+").concat(v, ")");
             });
@@ -5356,7 +6150,7 @@ function Breakdown() {
             captainInitial = captain ? initial(captain) : "not recorded";
             prompt = "You are writing a Coaches Report for the Balmain U11 rugby team known as the Wolves. The audience is the head coach but the report may also be shared with team management. Tone: analytical, honest, constructive, somewhat shareable. Use full player names from the data provided. Length: 300-400 words. Always refer to the team as \"the Wolves\" (never \"BJRU\"). Refer to the opposition by their name from the setup field. For negative involvements, only reference the aggregate tally \u2014 never name individual players.\n\nStructure the report with these section headings (use markdown ## headers):\n\n## Match Context\nBrief 1-2 sentence overview of the match including opposition, location, weather, kick-off time, and captain. Note how these factors may have affected the game.\n\n## Strengths\nWhat the data shows we did well. Compare 1st half vs 2nd half performance where relevant. Reference specific discipline patterns, set piece reasons (e.g. did we win lineouts via clean throws?), and possession control. Note when in the match we scored.\n\n## Weaknesses\nWhere we struggled. Identify patterns by examining the half-by-half breakdown, set piece reason details, and timing of discipline events. For example: \"We conceded 4 penalties in the second half vs 1 in the first\" or \"Most scrums were lost from poor feed\". Be specific, honest and constructive.\n\n## Training Work-Ons\n3-5 specific, actionable focus areas for the next training session. Tie each to data observed in the match.\n\n## Player Highlights\nUse first initials. Call out players who had high positive involvement counts. Reference the workload data to note who got the most game time and who rotated most. Note the MOTM if recorded.\n\nAvailable data:\n- Final score: ".concat(finalScore, "\n- Score progression: ").concat(scoreProgression, "\n- Missed conversions: BJRU ").concat(missedConvBjru, ", OPPO ").concat(missedConvOppo, "\n- Opposition: ").concat(oppoName || "not recorded", "\n- Location: ").concat(locationWeather || "not recorded", "\n- Kick-off time: ").concat(gameTime || "not recorded", "\n- Weather: ").concat(weather || "not recorded", "\n- Captain: ").concat(captainInitial, "\n- Starting subs: ").concat(startingSubs.filter(function (s) {
               return s;
-            }).map(initial).join(", ") || "not recorded", "\n- Additional players: ").concat(extraPlayersList, "\n- Pre-game notes / game plan: ").concat(preGameNotes || "not recorded", "\n- Possession overall: ").concat(possessionStr, "\n- Possession timeline: ").concat(possessionChanges, "\n- Penalties: Won ").concat(penWon, ", Lost ").concat(penLost, "\n- Free Kicks: Won ").concat(fkWon, ", Lost ").concat(fkLost, "\n- Scrums: Won ").concat(scrumW, ", Lost ").concat(scrumL, "\n- Line Outs: Won ").concat(loutW, ", Lost ").concat(loutL, "\n- Half-by-half breakdown: ").concat(halfSplit, "\n- Scrum reason breakdown: ").concat(scrumDetail, "\n- Line Out reason breakdown: ").concat(loutDetail, "\n- Discipline reason breakdown (Pen + FK): ").concat(reasonSummary, "\n- Player workload (interchange data): ").concat(workloadSummary, "\n- Sin bin events: ").concat(sinBinEvents, "\n- Positive player involvements (full names, H1/H2 split): ").concat(involvementsLog, "\n- Negative involvements (aggregate only, no names): ").concat(negativesLog, "\n- Involvement timing: ").concat(posInvTimestamps, "\n- 1st half positives: ").concat(positives || "not recorded", "\n- 2nd half positives: ").concat(positives2 || "not recorded", "\n- 1st half work-ons: ").concat(workOns || "not recorded", "\n- 2nd half work-ons: ").concat(workOns2 || "not recorded", "\n- 1st half opposition notes: ").concat(opposition || "not recorded", "\n- 2nd half opposition notes: ").concat(opposition2 || "not recorded", "\n- 1st half game plan: ").concat(gamePlan || "not recorded", "\n- 2nd half game plan: ").concat(gamePlan2 || "not recorded", "\n- 1st half highlights: ").concat(highlights || "not recorded", "\n- 2nd half highlights: ").concat(highlights2 || "not recorded", "\n- Man of the Match: ").concat(motm ? initial(motm) : "not selected").concat(motmReason ? " \u2014 ".concat(motmReason) : "", "\n\nWrite the full report. Use only the data provided \u2014 do not invent details. If a section has insufficient data, note this briefly rather than padding with generic advice.\n\nAfter all prose sections, add a section:\n\n## Match Data\n\nFormat as a clean table with the following data:\n\nMATCH SETUP\n| Field | Value |\n|---|---|\n| Opposition | ").concat(oppoName || "not recorded", " |\n| Date | ").concat(new Date().toLocaleDateString("en-AU"), " |\n| Location | ").concat(locationWeather || "not recorded", " |\n| Kick-off | ").concat(gameTime || "not recorded", " |\n| Weather | ").concat(weather || "not recorded", " |\n| Captain | ").concat(captainInitial, " |\n\nFINAL SCORE: ").concat(finalScore, "\n\nDISCIPLINE\n| Event | Won | Lost |\n|---|---|---|\n| Penalties | ").concat(penWon, " | ").concat(penLost, " |\n| Free Kicks | ").concat(fkWon, " | ").concat(fkLost, " |\n| Scrums | ").concat(scrumW, " | ").concat(scrumL, " |\n| Line Outs | ").concat(loutW, " | ").concat(loutL, " |\n\nSCORING\n").concat(scorerLog, "\n\nPOSSESSION\n").concat(possessionStr, "\n\nPLAYER INVOLVEMENTS (positive)\n").concat(involvementsLog, "\n");
+            }).map(initial).join(", ") || "not recorded", "\n- Additional players: ").concat(extraPlayersList, "\n- Pre-game notes / game plan: ").concat(preGameNotes || "not recorded", "\n- Possession overall: ").concat(possessionStr, "\n- Possession timeline: ").concat(possessionChanges, "\n- Penalties: Won ").concat(penWon, ", Lost ").concat(penLost, "\n- Free Kicks: Won ").concat(fkWon, ", Lost ").concat(fkLost, "\n- Scrums: Won ").concat(scrumW, ", Lost ").concat(scrumL, "\n- Line Outs: Won ").concat(loutW, ", Lost ").concat(loutL, "\n- Half-by-half breakdown: ").concat(halfSplit, "\n- Scrum reason breakdown: ").concat(scrumDetail, "\n- Line Out reason breakdown: ").concat(loutDetail, "\n- Discipline reason breakdown (Pen + FK): ").concat(reasonSummary, "\n- Player workload (interchange data): ").concat(workloadSummary, "\n- Sin bin events: ").concat(sinBinEvents, "\n- Total turnovers: ").concat(turnoverStr, "\n- Team effort levels (involvements): ").concat(teamEffortStr, "\n- Avg time between positive involvements: ").concat(effortGapStr, "\n- Positive player involvements (full names, H1/H2 split): ").concat(involvementsLog, "\n- Negative involvements (aggregate only, no names): ").concat(negativesLog, "\n- Involvement timing: ").concat(posInvTimestamps, "\n- 1st half positives: ").concat(positives || "not recorded", "\n- 2nd half positives: ").concat(positives2 || "not recorded", "\n- 1st half work-ons: ").concat(workOns || "not recorded", "\n- 2nd half work-ons: ").concat(workOns2 || "not recorded", "\n- 1st half opposition notes: ").concat(opposition || "not recorded", "\n- 2nd half opposition notes: ").concat(opposition2 || "not recorded", "\n- 1st half game plan: ").concat(gamePlan || "not recorded", "\n- 2nd half game plan: ").concat(gamePlan2 || "not recorded", "\n- 1st half highlights: ").concat(highlights || "not recorded", "\n- 2nd half highlights: ").concat(highlights2 || "not recorded", "\n- Man of the Match: ").concat(motm ? initial(motm) : "not selected").concat(motmReason ? " \u2014 ".concat(motmReason) : "", "\n\nWrite the full report. Use only the data provided \u2014 do not invent details. If a section has insufficient data, note this briefly rather than padding with generic advice.\n\nAfter all prose sections, add a section:\n\n## Match Data\n\nFormat as a clean table with the following data:\n\nMATCH SETUP\n| Field | Value |\n|---|---|\n| Opposition | ").concat(oppoName || "not recorded", " |\n| Date | ").concat(new Date().toLocaleDateString("en-AU"), " |\n| Location | ").concat(locationWeather || "not recorded", " |\n| Kick-off | ").concat(gameTime || "not recorded", " |\n| Weather | ").concat(weather || "not recorded", " |\n| Captain | ").concat(captainInitial, " |\n\nFINAL SCORE: ").concat(finalScore, "\n\nDISCIPLINE\n| Event | Won | Lost |\n|---|---|---|\n| Penalties | ").concat(penWon, " | ").concat(penLost, " |\n| Free Kicks | ").concat(fkWon, " | ").concat(fkLost, " |\n| Scrums | ").concat(scrumW, " | ").concat(scrumL, " |\n| Line Outs | ").concat(loutW, " | ").concat(loutL, " |\n\nSCORING\n").concat(scorerLog, "\n\nPOSSESSION\n").concat(possessionStr, "\n\nPLAYER INVOLVEMENTS (positive)\n").concat(involvementsLog, "\n");
             _context2.p = 1;
             _context2.n = 2;
             return fetch("/api", {
@@ -5394,7 +6188,7 @@ function Breakdown() {
       }, _callee2, null, [[1, 4]]);
     }));
     return function generateCoachesReport() {
-      return _ref28.apply(this, arguments);
+      return _ref30.apply(this, arguments);
     };
   }();
   var generateTalkingPoints = function generateTalkingPoints(half) {
@@ -6275,13 +7069,6 @@ function Breakdown() {
     }
   }, "Match Details"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
-      color: t.muted,
-      marginBottom: 14,
-      lineHeight: 1.5
-    }
-  }, "Used in the score worm and match summary."), /*#__PURE__*/React.createElement("div", {
-    style: {
       fontSize: 10,
       color: t.muted,
       letterSpacing: "0.1em",
@@ -6654,7 +7441,7 @@ function Breakdown() {
       marginBottom: 8,
       lineHeight: 1.5
     }
-  }, "How long should players rest before being flagged as ready?"), /*#__PURE__*/React.createElement("select", {
+  }, "Enter the default bench time per sub."), /*#__PURE__*/React.createElement("select", {
     value: defaultSubMins,
     onChange: function onChange(e) {
       return setDefaultSubMins(Number(e.target.value));
@@ -6994,9 +7781,9 @@ function Breakdown() {
 }
 
 // ── Checklist item — derives theme internally from darkMode ──────────────────
-function ChecklistItem(_ref42) {
-  var item = _ref42.item,
-    darkMode = _ref42.darkMode;
+function ChecklistItem(_ref44) {
+  var item = _ref44.item,
+    darkMode = _ref44.darkMode;
   var _useState183 = useState(false),
     _useState184 = _slicedToArray(_useState183, 2),
     checked = _useState184[0],
@@ -7049,15 +7836,15 @@ function ChecklistItem(_ref42) {
 
 // ── AccordionSection ──────────────────────────────────────────────────────────
 // Receives darkMode bool (not t object) to avoid resetting state on every render
-function AccordionSection(_ref43) {
-  var title = _ref43.title,
-    subtitle = _ref43.subtitle,
-    icon = _ref43.icon,
-    numberLabel = _ref43.numberLabel,
-    darkMode = _ref43.darkMode,
-    _ref43$defaultOpen = _ref43.defaultOpen,
-    defaultOpen = _ref43$defaultOpen === void 0 ? false : _ref43$defaultOpen,
-    children = _ref43.children;
+function AccordionSection(_ref45) {
+  var title = _ref45.title,
+    subtitle = _ref45.subtitle,
+    icon = _ref45.icon,
+    numberLabel = _ref45.numberLabel,
+    darkMode = _ref45.darkMode,
+    _ref45$defaultOpen = _ref45.defaultOpen,
+    defaultOpen = _ref45$defaultOpen === void 0 ? false : _ref45$defaultOpen,
+    children = _ref45.children;
   var _useState185 = useState(defaultOpen),
     _useState186 = _slicedToArray(_useState185, 2),
     open = _useState186[0],
@@ -7173,15 +7960,15 @@ function AccordionSection(_ref43) {
 }
 
 // ── ChatModal — stable external component to prevent keyboard dismiss ─────────
-function ChatModal(_ref44) {
-  var chatMessages = _ref44.chatMessages,
-    chatLoading = _ref44.chatLoading,
-    chatEndRef = _ref44.chatEndRef,
-    chatInput = _ref44.chatInput,
-    setChatInput = _ref44.setChatInput,
-    sendChat = _ref44.sendChat,
-    setChatOpen = _ref44.setChatOpen,
-    darkMode = _ref44.darkMode;
+function ChatModal(_ref46) {
+  var chatMessages = _ref46.chatMessages,
+    chatLoading = _ref46.chatLoading,
+    chatEndRef = _ref46.chatEndRef,
+    chatInput = _ref46.chatInput,
+    setChatInput = _ref46.setChatInput,
+    sendChat = _ref46.sendChat,
+    setChatOpen = _ref46.setChatOpen,
+    darkMode = _ref46.darkMode;
   var gold = darkMode ? "#F5A800" : "#c48400";
   var t = darkMode ? {
     bg: "#0d0d0d",
@@ -7376,15 +8163,15 @@ function ChatModal(_ref44) {
 
 // ── SubTimer — stable external component so input never remounts on keypress ──
 // Derives theme internally from darkMode bool — never receives t object as prop
-function SubTimer(_ref45) {
-  var label = _ref45.label,
-    active = _ref45.active,
-    time = _ref45.time,
-    playerLabel = _ref45.playerLabel,
-    setActive = _ref45.setActive,
-    setTime = _ref45.setTime,
-    setLabel = _ref45.setLabel,
-    darkMode = _ref45.darkMode;
+function SubTimer(_ref47) {
+  var label = _ref47.label,
+    active = _ref47.active,
+    time = _ref47.time,
+    playerLabel = _ref47.playerLabel,
+    setActive = _ref47.setActive,
+    setTime = _ref47.setTime,
+    setLabel = _ref47.setLabel,
+    darkMode = _ref47.darkMode;
   var gold = "#F5A800",
     goldDim = "#c48400";
   var c = darkMode ? {
