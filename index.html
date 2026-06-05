@@ -5849,12 +5849,40 @@ function Breakdown() {
   // ── Auto-save game state to localStorage ─────────────────────────────────
   var LS_KEY = "breakdown_game_v1";
 
-  // Visual save indicator
-  var _useState181 = useState(""),
+  // Check for saved game on load
+  var _useState181 = useState(false),
     _useState182 = _slicedToArray(_useState181, 2),
-    saveIndicator = _useState182[0],
-    setSaveIndicator = _useState182[1];
+    showResume = _useState182[0],
+    setShowResume = _useState182[1];
+  var _useState183 = useState(null),
+    _useState184 = _slicedToArray(_useState183, 2),
+    resumeData = _useState184[0],
+    setResumeData = _useState184[1];
   useEffect(function () {
+    try {
+      var saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        var data = JSON.parse(saved);
+        // Only show resume if there's meaningful game data
+        if (data.oppoName || data.scoreBjru > 0 || data.scoreOppo > 0 || data.otherEvents && data.otherEvents.length > 0) {
+          setResumeData(data);
+          setShowResume(true);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  // Visual save indicator
+  var _useState185 = useState(""),
+    _useState186 = _slicedToArray(_useState185, 2),
+    saveIndicator = _useState186[0],
+    setSaveIndicator = _useState186[1];
+  var hasMounted = useRef(false);
+  useEffect(function () {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     try {
       var saveData = {
         scoreBjru: scoreBjru,
@@ -5893,38 +5921,15 @@ function Breakdown() {
         savedAt: Date.now()
       };
       localStorage.setItem(LS_KEY, JSON.stringify(saveData));
-      setSaveIndicator("✓ " + new Date().toLocaleTimeString("en-AU", {
+      setSaveIndicator("💾 " + new Date().toLocaleTimeString("en-AU", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit"
-      }));
+      }) + " · " + (saveData.otherEvents ? saveData.otherEvents.length : 0) + " events · " + (saveData.oppoName || "no opp"));
     } catch (e) {
       setSaveIndicator("⚠ Save failed");
     }
   }, [scoreBjru, scoreOppo, scoreHistory, otherEvents, playerImpact, possession, possessionLog, halfTimer, halfHalf, halfRunning, matchEnded, oppoName, locationWeather, weather, gameTime, preGameNotes, captain, startingSubs, playerTimers, interchangeLog, sinBinActive, sinBinTime]);
-
-  // Check for saved game on load
-  var _useState183 = useState(false),
-    _useState184 = _slicedToArray(_useState183, 2),
-    showResume = _useState184[0],
-    setShowResume = _useState184[1];
-  var _useState185 = useState(null),
-    _useState186 = _slicedToArray(_useState185, 2),
-    resumeData = _useState186[0],
-    setResumeData = _useState186[1];
-  useEffect(function () {
-    try {
-      var saved = localStorage.getItem(LS_KEY);
-      if (saved) {
-        var data = JSON.parse(saved);
-        // Only show resume if there's meaningful game data
-        if (data.oppoName || data.scoreBjru > 0 || data.scoreOppo > 0 || data.otherEvents && data.otherEvents.length > 0) {
-          setResumeData(data);
-          setShowResume(true);
-        }
-      }
-    } catch (e) {}
-  }, []);
   var resumeGame = function resumeGame() {
     if (!resumeData) return;
     var d = resumeData;
