@@ -1636,7 +1636,9 @@ function HomePage(_ref3) {
                 player: null,
                 stamp: getStamp(),
                 sanction: "Set Piece",
-                won: scrumWon
+                won: scrumWon,
+                half: halfHalf,
+                possAtLog: possession
               }]);
             });
           }, 50);
@@ -1654,7 +1656,8 @@ function HomePage(_ref3) {
           stamp: getStamp(),
           sanction: "Set Piece",
           won: btn.won,
-          half: halfHalf
+          half: halfHalf,
+          possAtLog: possession
         }]);
       });
       // W = BJRU wins set piece → BJRU gets ball. L = BJRU loses → OPPO gets ball
@@ -3294,20 +3297,20 @@ function MatchPage(_ref15) {
       marginTop: 20,
       marginBottom: 6
     }
-  }, "Game Events"), function () {
-    var h = function h(pred, half) {
+  }, "Discipline & Turnovers"), function () {
+    var hh = function hh(pred, half) {
       return otherEvents.filter(function (e) {
         return pred(e) && e.half === half;
       }).length;
     };
-    var c = function c(pred) {
+    var cc = function cc(pred) {
       return otherEvents.filter(pred).length;
     };
     var hs = function hs(pred) {
       return {
-        h1: h(pred, 1),
-        h2: h(pred, 2),
-        tot: c(pred)
+        h1: hh(pred, 1),
+        h2: hh(pred, 2),
+        tot: cc(pred)
       };
     };
     var penW = hs(function (e) {
@@ -3346,40 +3349,38 @@ function MatchPage(_ref15) {
     var osL = hs(function (e) {
       return e.reason === "Offside" && !e.won;
     });
-    var scrW = hs(function (e) {
-      return e.sanction === "Scrum" && e.won || e.type === "Scrum W";
+
+    // Set piece turnovers — only when possession changes
+    // Won = OPPO had ball, we won set piece (gained possession)
+    // Lost = we had ball, we lost set piece (lost possession)
+    var spTurnW = hs(function (e) {
+      return (e.type === "Scrum W" || e.type === "L/Out W") && e.possAtLog === "oppo";
     });
-    var scrL = hs(function (e) {
-      return e.sanction === "Scrum" && !e.won || e.type === "Scrum L";
-    });
-    var loW = hs(function (e) {
-      return e.type === "L/Out W";
-    });
-    var loL = hs(function (e) {
-      return e.type === "L/Out L";
+    var spTurnL = hs(function (e) {
+      return (e.type === "Scrum L" || e.type === "L/Out L") && e.possAtLog === "bjru";
     });
 
-    // All won/lost events for Total Turnovers
+    // Total turnovers = all discipline won/lost + set piece turnovers
     var allWon = otherEvents.filter(function (e) {
-      return e.won === true;
+      return e.won === true && e.type !== "Scrum W" && e.type !== "L/Out W";
     });
     var allLost = otherEvents.filter(function (e) {
-      return e.won === false;
+      return e.won === false && e.type !== "Scrum L" && e.type !== "L/Out L";
     });
     var twH1 = allWon.filter(function (e) {
       return e.half === 1;
-    }).length;
+    }).length + spTurnW.h1;
     var twH2 = allWon.filter(function (e) {
       return e.half === 2;
-    }).length;
+    }).length + spTurnW.h2;
     var tlH1 = allLost.filter(function (e) {
       return e.half === 1;
-    }).length;
+    }).length + spTurnL.h1;
     var tlH2 = allLost.filter(function (e) {
       return e.half === 2;
-    }).length;
-    var twTot = allWon.length;
-    var tlTot = allLost.length;
+    }).length + spTurnL.h2;
+    var twTot = allWon.length + spTurnW.tot;
+    var tlTot = allLost.length + spTurnL.tot;
     var FS = 13;
     var SH = function SH(_ref16) {
       var label = _ref16.label;
@@ -3613,17 +3614,12 @@ function MatchPage(_ref15) {
       rLabel: "Offside Lost",
       rL: osL
     }), /*#__PURE__*/React.createElement(SH, {
-      label: "Set Piece"
+      label: "Set Piece Turnovers"
     }), /*#__PURE__*/React.createElement(Row, {
-      lLabel: "Scrum W",
-      lW: scrW,
-      rLabel: "Scrum L",
-      rL: scrL
-    }), /*#__PURE__*/React.createElement(Row, {
-      lLabel: "L/Out W",
-      lW: loW,
-      rLabel: "L/Out L",
-      rL: loL
+      lLabel: "SP Turn Won",
+      lW: spTurnW,
+      rLabel: "SP Turn Lost",
+      rL: spTurnL
     }), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -3750,24 +3746,6 @@ function MatchPage(_ref15) {
       return e.team === "oppo" && e.type === "Conv";
     });
     var FS = 13;
-    var SH = function SH(_ref18) {
-      var label = _ref18.label;
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "4px 8px",
-          backgroundColor: t.surface,
-          borderBottom: "1px solid ".concat(t.border)
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 9,
-          fontWeight: 700,
-          color: t.gold,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase"
-        }
-      }, label));
-    };
     var ColH = function ColH() {
       return /*#__PURE__*/React.createElement("div", {
         style: {
@@ -3847,11 +3825,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref19) {
-      var lLabel = _ref19.lLabel,
-        lW = _ref19.lW,
-        rLabel = _ref19.rLabel,
-        rL = _ref19.rL;
+    var Row = function Row(_ref18) {
+      var lLabel = _ref18.lLabel,
+        lW = _ref18.lW,
+        rLabel = _ref18.rLabel,
+        rL = _ref18.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -3950,6 +3928,334 @@ function MatchPage(_ref15) {
         marginBottom: 16
       }
     }, /*#__PURE__*/React.createElement(ColH, null), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Wolves Tries",
+      lW: tryW,
+      rLabel: "Opp Tries",
+      rL: tryL
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Wolves Conv",
+      lW: cvW,
+      rLabel: "Opp Conv",
+      rL: cvL
+    }));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 4,
+      marginBottom: 6
+    }
+  }, "Game Events"), function () {
+    var hh = function hh(pred, half) {
+      return otherEvents.filter(function (e) {
+        return pred(e) && e.half === half;
+      }).length;
+    };
+    var cc = function cc(pred) {
+      return otherEvents.filter(pred).length;
+    };
+    var hs = function hs(pred) {
+      return {
+        h1: hh(pred, 1),
+        h2: hh(pred, 2),
+        tot: cc(pred)
+      };
+    };
+    var ss = function ss(pred, half) {
+      return scoreHistory.filter(function (e) {
+        return pred(e) && e.half === half;
+      }).length;
+    };
+    var sc = function sc(pred) {
+      return scoreHistory.filter(pred).length;
+    };
+    var hss = function hss(pred) {
+      return {
+        h1: ss(pred, 1),
+        h2: ss(pred, 2),
+        tot: sc(pred)
+      };
+    };
+    var scrumAll = hs(function (e) {
+      return e.type === "Scrum W" || e.type === "Scrum L" || e.sanction === "Scrum";
+    });
+    var loutAll = hs(function (e) {
+      return e.type === "L/Out W" || e.type === "L/Out L";
+    });
+    var penAll = hs(function (e) {
+      return e.sanction === "Penalty";
+    });
+    var fkAll = hs(function (e) {
+      return e.sanction === "Free Kick";
+    });
+    var tryW = hss(function (e) {
+      return e.team === "bjru" && e.type === "Try";
+    });
+    var tryL = hss(function (e) {
+      return e.team === "oppo" && e.type === "Try";
+    });
+    var cvW = hss(function (e) {
+      return e.team === "bjru" && e.type === "Conv";
+    });
+    var cvL = hss(function (e) {
+      return e.team === "oppo" && e.type === "Conv";
+    });
+
+    // For single-team events (scrums/lineouts/penalties) show won on left, lost on right
+    var scrumW = hs(function (e) {
+      return e.sanction === "Scrum" && e.won || e.type === "Scrum W";
+    });
+    var scrumL = hs(function (e) {
+      return e.sanction === "Scrum" && !e.won || e.type === "Scrum L";
+    });
+    var loutW = hs(function (e) {
+      return e.type === "L/Out W";
+    });
+    var loutL = hs(function (e) {
+      return e.type === "L/Out L";
+    });
+    var penW2 = hs(function (e) {
+      return e.sanction === "Penalty" && e.won;
+    });
+    var penL2 = hs(function (e) {
+      return e.sanction === "Penalty" && !e.won;
+    });
+    var fkW2 = hs(function (e) {
+      return e.sanction === "Free Kick" && e.won;
+    });
+    var fkL2 = hs(function (e) {
+      return e.sanction === "Free Kick" && !e.won;
+    });
+    var FS = 13;
+    var SH = function SH(_ref19) {
+      var label = _ref19.label;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "4px 8px",
+          backgroundColor: t.surface,
+          borderBottom: "1px solid ".concat(t.border)
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          fontWeight: 700,
+          color: t.gold,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase"
+        }
+      }, label));
+    };
+    var ColH = function ColH() {
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          padding: "3px 8px",
+          backgroundColor: t.surface,
+          borderBottom: "1px solid ".concat(t.border)
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.gold,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 30,
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 7,
+          color: t.muted,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase"
+        }
+      }, "Total")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          flex: 1
+        }
+      }), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.8,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H1"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 8,
+          color: t.muted,
+          opacity: 0.5,
+          width: 22,
+          textAlign: "center"
+        }
+      }, "H2")));
+    };
+    var Row = function Row(_ref20) {
+      var lLabel = _ref20.lLabel,
+        lW = _ref20.lW,
+        rLabel = _ref20.rLabel,
+        rL = _ref20.rL;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          borderBottom: "1px solid ".concat(t.border),
+          padding: "6px 8px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: 2
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.gold,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center"
+        }
+      }, lW.h1), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.gold,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center",
+          opacity: 0.55
+        }
+      }, lW.h2), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: t.gold,
+          marginLeft: 3,
+          flex: 1
+        }
+      }, lLabel)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 30,
+          textAlign: "center"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.muted,
+          fontFamily: "monospace"
+        }
+      }, lW.tot + rL.tot)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 2
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: t.muted,
+          marginRight: 3,
+          flex: 1,
+          textAlign: "right"
+        }
+      }, rLabel), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.text,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center",
+          opacity: 0.55
+        }
+      }, rL.h1), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: FS,
+          fontWeight: 700,
+          color: t.text,
+          fontFamily: "monospace",
+          width: 22,
+          textAlign: "center"
+        }
+      }, rL.h2)));
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: t.card,
+        border: "1px solid ".concat(t.border),
+        borderRadius: 8,
+        overflow: "hidden",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement(ColH, null), /*#__PURE__*/React.createElement(SH, {
+      label: "Set Piece"
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Scrum W",
+      lW: scrumW,
+      rLabel: "Scrum L",
+      rL: scrumL
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "L/Out W",
+      lW: loutW,
+      rLabel: "L/Out L",
+      rL: loutL
+    }), /*#__PURE__*/React.createElement(SH, {
+      label: "Discipline"
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "Pen Won",
+      lW: penW2,
+      rLabel: "Pen Lost",
+      rL: penL2
+    }), /*#__PURE__*/React.createElement(Row, {
+      lLabel: "FK Won",
+      lW: fkW2,
+      rLabel: "FK Lost",
+      rL: fkL2
+    }), /*#__PURE__*/React.createElement(SH, {
+      label: "Scoring"
+    }), /*#__PURE__*/React.createElement(Row, {
       lLabel: "Wolves Tries",
       lW: tryW,
       rLabel: "Opp Tries",
@@ -4240,12 +4546,12 @@ function MatchPage(_ref15) {
 
     // Render symbols
     var symbols = [];
-    Object.entries(byMinute).forEach(function (_ref20) {
-      var _ref21 = _slicedToArray(_ref20, 2),
-        min = _ref21[0],
-        _ref21$ = _ref21[1],
-        won = _ref21$.won,
-        lost = _ref21$.lost;
+    Object.entries(byMinute).forEach(function (_ref21) {
+      var _ref22 = _slicedToArray(_ref21, 2),
+        min = _ref22[0],
+        _ref22$ = _ref22[1],
+        won = _ref22$.won,
+        lost = _ref22$.lost;
       var x = xScale(parseInt(min));
       // Won events stack ABOVE midY
       won.forEach(function (e, i) {
@@ -4374,11 +4680,11 @@ function MatchPage(_ref15) {
         marginTop: 4,
         flexWrap: "wrap"
       }
-    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref22) {
-      var _ref23 = _slicedToArray(_ref22, 3),
-        sym = _ref23[0],
-        col = _ref23[1],
-        label = _ref23[2];
+    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref23) {
+      var _ref24 = _slicedToArray(_ref23, 3),
+        sym = _ref24[0],
+        col = _ref24[1],
+        label = _ref24[2];
       return /*#__PURE__*/React.createElement("div", {
         key: label,
         style: {
@@ -4871,8 +5177,8 @@ function MatchPage(_ref15) {
     }, e.stamp));
   })));
 }
-function ConcussionPage(_ref24) {
-  var ctx = _ref24.ctx;
+function ConcussionPage(_ref25) {
+  var ctx = _ref25.ctx;
   var t = ctx.t,
     darkMode = ctx.darkMode,
     expandedStep = ctx.expandedStep,
@@ -5807,7 +6113,7 @@ function Breakdown() {
     if (awaitConv) setAwaitConv(null);
   };
   var generateSummary = /*#__PURE__*/function () {
-    var _ref25 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
+    var _ref26 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
       var onFieldCount, playerMins, scorerLog, finalScore, penWon, penLost, fkWon, fkLost, disciplineLog, missedConv, smTurnoverWon, smTurnoverLost, smPosInv, positiveInvolvements, involvementsLog, interchangeSummary, extraPlayersList, prompt, _data$content, res, data, _t;
       return _regenerator().w(function (_context) {
         while (1) switch (_context.p = _context.n) {
@@ -5851,17 +6157,17 @@ function Breakdown() {
             smPosInv = otherEvents.filter(function (e) {
               return e.type === "+";
             }).length; // Positive involvements — player names only for match summary (no counts)
-            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref26) {
-              var _ref27 = _slicedToArray(_ref26, 2),
-                p = _ref27[0],
-                v = _ref27[1];
+            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref27) {
+              var _ref28 = _slicedToArray(_ref27, 2),
+                p = _ref28[0],
+                v = _ref28[1];
               return v > 0;
             }).sort(function (a, b) {
               return b[1] - a[1];
-            }).map(function (_ref28) {
-              var _ref29 = _slicedToArray(_ref28, 2),
-                p = _ref29[0],
-                v = _ref29[1];
+            }).map(function (_ref29) {
+              var _ref30 = _slicedToArray(_ref29, 2),
+                p = _ref30[0],
+                v = _ref30[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return name;
             });
@@ -5911,11 +6217,11 @@ function Breakdown() {
       }, _callee, null, [[1, 4]]);
     }));
     return function generateSummary(_x) {
-      return _ref25.apply(this, arguments);
+      return _ref26.apply(this, arguments);
     };
   }();
   var generateCoachesReport = /*#__PURE__*/function () {
-    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+    var _ref31 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
       var scorerLog, finalScore, parseMin, isFirstHalf, c, h1, h2, halfStats, h1s, h2s, halfSplit, scrumReasons, loutReasons, scrumDetail, loutDetail, reasonCounts, reasonSummary, allWonEvents, allLostEvents, turnoverWonH1, turnoverWonH2, turnoverLostH1, turnoverLostH2, turnoverWonTotal, turnoverLostTotal, turnoverStr, teamPosH1, teamPosH2, teamNegH1, teamNegH2, teamEffortStr, parseMinCR, crPosH1, crPosH2, avgGapCR, h1GapCR, h2GapCR, effortGapStr, penWon, penLost, fkWon, fkLost, scrumW, scrumL, loutW, loutL, bjruPossSecs, oppoPossSecs, totalPoss, possessionStr, possessionChanges, scoreProgression, missedConvBjru, missedConvOppo, workloadEntries, workloadSummary, sinBinEvents, initial, positivePlayers, involvementsLog, extraPlayersList, captainInitial, prompt, _data$content2, res, data, _t2;
       return _regenerator().w(function (_context2) {
         while (1) switch (_context2.p = _context2.n) {
@@ -5983,16 +6289,16 @@ function Breakdown() {
                 loutReasons[_k] = (loutReasons[_k] || 0) + 1;
               }
             });
-            scrumDetail = Object.entries(scrumReasons).map(function (_ref31) {
-              var _ref32 = _slicedToArray(_ref31, 2),
-                k = _ref32[0],
-                v = _ref32[1];
+            scrumDetail = Object.entries(scrumReasons).map(function (_ref32) {
+              var _ref33 = _slicedToArray(_ref32, 2),
+                k = _ref33[0],
+                v = _ref33[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "no detail";
-            loutDetail = Object.entries(loutReasons).map(function (_ref33) {
-              var _ref34 = _slicedToArray(_ref33, 2),
-                k = _ref34[0],
-                v = _ref34[1];
+            loutDetail = Object.entries(loutReasons).map(function (_ref34) {
+              var _ref35 = _slicedToArray(_ref34, 2),
+                k = _ref35[0],
+                v = _ref35[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "no detail"; // ── Discipline breakdown by reason (full) ───────────────────────────────
             reasonCounts = {};
@@ -6002,10 +6308,10 @@ function Breakdown() {
                 reasonCounts[key] = (reasonCounts[key] || 0) + 1;
               }
             });
-            reasonSummary = Object.entries(reasonCounts).map(function (_ref35) {
-              var _ref36 = _slicedToArray(_ref35, 2),
-                k = _ref36[0],
-                v = _ref36[1];
+            reasonSummary = Object.entries(reasonCounts).map(function (_ref36) {
+              var _ref37 = _slicedToArray(_ref36, 2),
+                k = _ref37[0],
+                v = _ref37[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "none recorded"; // ── Turnover totals ─────────────────────────────────────────────────────
             allWonEvents = otherEvents.filter(function (e) {
@@ -6113,10 +6419,10 @@ function Breakdown() {
             missedConvOppo = scoreHistory.filter(function (e) {
               return e.team === "oppo" && e.type === "Miss";
             }).length; // ── Player workload ─────────────────────────────────────────────────────
-            workloadEntries = Object.entries(playerTimers).map(function (_ref37) {
-              var _ref38 = _slicedToArray(_ref37, 2),
-                p = _ref38[0],
-                pt = _ref38[1];
+            workloadEntries = Object.entries(playerTimers).map(function (_ref38) {
+              var _ref39 = _slicedToArray(_ref38, 2),
+                p = _ref39[0],
+                pt = _ref39[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || null : p;
               if (!name) return null;
               var init = name[0] ? name[0].toUpperCase() + "." : "?";
@@ -6131,17 +6437,17 @@ function Breakdown() {
             initial = function initial(name) {
               return name && name[0] ? name[0].toUpperCase() + "." : "?";
             };
-            positivePlayers = Object.entries(playerImpact).filter(function (_ref39) {
-              var _ref40 = _slicedToArray(_ref39, 2),
-                p = _ref40[0],
-                v = _ref40[1];
+            positivePlayers = Object.entries(playerImpact).filter(function (_ref40) {
+              var _ref41 = _slicedToArray(_ref40, 2),
+                p = _ref41[0],
+                v = _ref41[1];
               return v > 0;
             }).sort(function (a, b) {
               return b[1] - a[1];
-            }).map(function (_ref41) {
-              var _ref42 = _slicedToArray(_ref41, 2),
-                p = _ref42[0],
-                v = _ref42[1];
+            }).map(function (_ref42) {
+              var _ref43 = _slicedToArray(_ref42, 2),
+                p = _ref43[0],
+                v = _ref43[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return "".concat(initial(name), " (+").concat(v, ")");
             });
@@ -6188,7 +6494,7 @@ function Breakdown() {
       }, _callee2, null, [[1, 4]]);
     }));
     return function generateCoachesReport() {
-      return _ref30.apply(this, arguments);
+      return _ref31.apply(this, arguments);
     };
   }();
   var generateTalkingPoints = function generateTalkingPoints(half) {
@@ -7781,9 +8087,9 @@ function Breakdown() {
 }
 
 // ── Checklist item — derives theme internally from darkMode ──────────────────
-function ChecklistItem(_ref44) {
-  var item = _ref44.item,
-    darkMode = _ref44.darkMode;
+function ChecklistItem(_ref45) {
+  var item = _ref45.item,
+    darkMode = _ref45.darkMode;
   var _useState183 = useState(false),
     _useState184 = _slicedToArray(_useState183, 2),
     checked = _useState184[0],
@@ -7836,15 +8142,15 @@ function ChecklistItem(_ref44) {
 
 // ── AccordionSection ──────────────────────────────────────────────────────────
 // Receives darkMode bool (not t object) to avoid resetting state on every render
-function AccordionSection(_ref45) {
-  var title = _ref45.title,
-    subtitle = _ref45.subtitle,
-    icon = _ref45.icon,
-    numberLabel = _ref45.numberLabel,
-    darkMode = _ref45.darkMode,
-    _ref45$defaultOpen = _ref45.defaultOpen,
-    defaultOpen = _ref45$defaultOpen === void 0 ? false : _ref45$defaultOpen,
-    children = _ref45.children;
+function AccordionSection(_ref46) {
+  var title = _ref46.title,
+    subtitle = _ref46.subtitle,
+    icon = _ref46.icon,
+    numberLabel = _ref46.numberLabel,
+    darkMode = _ref46.darkMode,
+    _ref46$defaultOpen = _ref46.defaultOpen,
+    defaultOpen = _ref46$defaultOpen === void 0 ? false : _ref46$defaultOpen,
+    children = _ref46.children;
   var _useState185 = useState(defaultOpen),
     _useState186 = _slicedToArray(_useState185, 2),
     open = _useState186[0],
@@ -7960,15 +8266,15 @@ function AccordionSection(_ref45) {
 }
 
 // ── ChatModal — stable external component to prevent keyboard dismiss ─────────
-function ChatModal(_ref46) {
-  var chatMessages = _ref46.chatMessages,
-    chatLoading = _ref46.chatLoading,
-    chatEndRef = _ref46.chatEndRef,
-    chatInput = _ref46.chatInput,
-    setChatInput = _ref46.setChatInput,
-    sendChat = _ref46.sendChat,
-    setChatOpen = _ref46.setChatOpen,
-    darkMode = _ref46.darkMode;
+function ChatModal(_ref47) {
+  var chatMessages = _ref47.chatMessages,
+    chatLoading = _ref47.chatLoading,
+    chatEndRef = _ref47.chatEndRef,
+    chatInput = _ref47.chatInput,
+    setChatInput = _ref47.setChatInput,
+    sendChat = _ref47.sendChat,
+    setChatOpen = _ref47.setChatOpen,
+    darkMode = _ref47.darkMode;
   var gold = darkMode ? "#F5A800" : "#c48400";
   var t = darkMode ? {
     bg: "#0d0d0d",
@@ -8163,15 +8469,15 @@ function ChatModal(_ref46) {
 
 // ── SubTimer — stable external component so input never remounts on keypress ──
 // Derives theme internally from darkMode bool — never receives t object as prop
-function SubTimer(_ref47) {
-  var label = _ref47.label,
-    active = _ref47.active,
-    time = _ref47.time,
-    playerLabel = _ref47.playerLabel,
-    setActive = _ref47.setActive,
-    setTime = _ref47.setTime,
-    setLabel = _ref47.setLabel,
-    darkMode = _ref47.darkMode;
+function SubTimer(_ref48) {
+  var label = _ref48.label,
+    active = _ref48.active,
+    time = _ref48.time,
+    playerLabel = _ref48.playerLabel,
+    setActive = _ref48.setActive,
+    setTime = _ref48.setTime,
+    setLabel = _ref48.setLabel,
+    darkMode = _ref48.darkMode;
   var gold = "#F5A800",
     goldDim = "#c48400";
   var c = darkMode ? {
