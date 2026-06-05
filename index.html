@@ -5798,13 +5798,129 @@ function Breakdown() {
     _useState180 = _slicedToArray(_useState179, 2),
     reportLoading = _useState180[0],
     setReportLoading = _useState180[1];
-  var _useState181 = useState({
+  // ── Auto-save game state to localStorage ─────────────────────────────────
+  var LS_KEY = "breakdown_game_v1";
+  var getSaveState = function getSaveState() {
+    return {
+      scoreBjru: scoreBjru,
+      scoreOppo: scoreOppo,
+      scoreHistory: scoreHistory,
+      otherEvents: otherEvents,
+      playerImpact: playerImpact,
+      possession: possession,
+      possessionLog: possessionLog,
+      halfTimer: halfTimer,
+      halfHalf: halfHalf,
+      halfRunning: halfRunning,
+      halfSnapshot: halfSnapshot,
+      halfLabel: halfLabel,
+      oppoName: oppoName,
+      locationWeather: locationWeather,
+      weather: weather,
+      gameTime: gameTime,
+      preGameNotes: preGameNotes,
+      captain: captain,
+      startingSubs: startingSubs,
+      unavailablePlayers: unavailablePlayers,
+      scrumContested: scrumContested,
+      extraNames: extraNames,
+      playerTimers: playerTimers,
+      interchangeLog: interchangeLog,
+      matchEnded: matchEnded,
+      defaultSubMins: defaultSubMins,
+      awaitConv: awaitConv,
+      convName: convName,
+      pendingTeam: pendingTeam,
+      scorerName: scorerName,
+      sinBinActive: sinBinActive,
+      sinBinTime: sinBinTime,
+      sinBinLabel: sinBinLabel,
+      savedAt: Date.now()
+    };
+  };
+
+  // Auto-save on every meaningful state change
+  useEffect(function () {
+    if (showSplash) return; // don't save during splash
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(getSaveState()));
+    } catch (e) {}
+  }, [scoreBjru, scoreOppo, scoreHistory, otherEvents, playerImpact, possession, halfTimer, halfHalf, halfRunning, matchEnded, oppoName, locationWeather, weather, gameTime]);
+
+  // Check for saved game on load
+  var _useState181 = useState(false),
+    _useState182 = _slicedToArray(_useState181, 2),
+    showResume = _useState182[0],
+    setShowResume = _useState182[1];
+  var _useState183 = useState(null),
+    _useState184 = _slicedToArray(_useState183, 2),
+    resumeData = _useState184[0],
+    setResumeData = _useState184[1];
+  useEffect(function () {
+    try {
+      var saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        var data = JSON.parse(saved);
+        // Only show resume if there's meaningful game data
+        if (data.oppoName || data.scoreBjru > 0 || data.scoreOppo > 0 || data.otherEvents && data.otherEvents.length > 0) {
+          setResumeData(data);
+          setShowResume(true);
+        }
+      }
+    } catch (e) {}
+  }, []);
+  var resumeGame = function resumeGame() {
+    if (!resumeData) return;
+    var d = resumeData;
+    if (d.scoreBjru !== undefined) setScoreBjru(d.scoreBjru);
+    if (d.scoreOppo !== undefined) setScoreOppo(d.scoreOppo);
+    if (d.scoreHistory) setScoreHistory(d.scoreHistory);
+    if (d.otherEvents) setOtherEvents(d.otherEvents);
+    if (d.playerImpact) setPlayerImpact(d.playerImpact);
+    if (d.possession !== undefined) setPossession(d.possession);
+    if (d.possessionLog) setPossessionLog(d.possessionLog);
+    if (d.halfTimer !== undefined) setHalfTimer(d.halfTimer);
+    if (d.halfHalf !== undefined) setHalfHalf(d.halfHalf);
+    if (d.halfSnapshot !== undefined) setHalfSnapshot(d.halfSnapshot);
+    if (d.halfLabel) setHalfLabel(d.halfLabel);
+    if (d.oppoName) setOppoName(d.oppoName);
+    if (d.locationWeather) setLocationWeather(d.locationWeather);
+    if (d.weather) setWeather(d.weather);
+    if (d.gameTime) setGameTime(d.gameTime);
+    if (d.preGameNotes) setPreGameNotes(d.preGameNotes);
+    if (d.captain) setCaptain(d.captain);
+    if (d.startingSubs) setStartingSubs(d.startingSubs);
+    if (d.unavailablePlayers) setUnavailablePlayers(d.unavailablePlayers);
+    if (d.scrumContested) setScrumContested(d.scrumContested);
+    if (d.extraNames) setExtraNames(d.extraNames);
+    if (d.playerTimers) setPlayerTimers(d.playerTimers);
+    if (d.interchangeLog) setInterchangeLog(d.interchangeLog);
+    if (d.matchEnded !== undefined) setMatchEnded(d.matchEnded);
+    if (d.defaultSubMins) setDefaultSubMins(d.defaultSubMins);
+    if (d.awaitConv !== undefined) setAwaitConv(d.awaitConv);
+    if (d.convName !== undefined) setConvName(d.convName);
+    if (d.pendingTeam !== undefined) setPendingTeam(d.pendingTeam);
+    if (d.scorerName !== undefined) setScorerName(d.scorerName);
+    if (d.sinBinActive !== undefined) setSinBinActive(d.sinBinActive);
+    if (d.sinBinTime !== undefined) setSinBinTime(d.sinBinTime);
+    if (d.sinBinLabel !== undefined) setSinBinLabel(d.sinBinLabel);
+    setShowResume(false);
+    setResumeData(null);
+  };
+  var clearSave = function clearSave() {
+    try {
+      localStorage.removeItem(LS_KEY);
+    } catch (e) {}
+    setShowResume(false);
+    setResumeData(null);
+  };
+  var _useState185 = useState({
       half: false,
       full: false
     }),
-    _useState182 = _slicedToArray(_useState181, 2),
-    talkingPointsLoading = _useState182[0],
-    setTalkingPointsLoading = _useState182[1];
+    _useState186 = _slicedToArray(_useState185, 2),
+    talkingPointsLoading = _useState186[0],
+    setTalkingPointsLoading = _useState186[1];
   var chatEndRef = useRef(null);
   var sinBinRef = useRef(null);
   var halfRef = useRef(null);
@@ -7277,6 +7393,9 @@ function Breakdown() {
       setGameTime("");
       setUnavailablePlayers([]);
       setScrumContested("contested");
+      try {
+        localStorage.removeItem("breakdown_game_v1");
+      } catch (e) {}
       setCaptain("");
       setStartingSubs(["", "", "", ""]);
       setPreGameNotes("");
@@ -8090,10 +8209,10 @@ function Breakdown() {
 function ChecklistItem(_ref45) {
   var item = _ref45.item,
     darkMode = _ref45.darkMode;
-  var _useState183 = useState(false),
-    _useState184 = _slicedToArray(_useState183, 2),
-    checked = _useState184[0],
-    setChecked = _useState184[1];
+  var _useState187 = useState(false),
+    _useState188 = _slicedToArray(_useState187, 2),
+    checked = _useState188[0],
+    setChecked = _useState188[1];
   var gold = darkMode ? "#F5A800" : "#c48400";
   var border = darkMode ? "#2a2a2a" : "#e0e0d8";
   var text = darkMode ? "#f0f0f0" : "#111111";
@@ -8151,10 +8270,10 @@ function AccordionSection(_ref46) {
     _ref46$defaultOpen = _ref46.defaultOpen,
     defaultOpen = _ref46$defaultOpen === void 0 ? false : _ref46$defaultOpen,
     children = _ref46.children;
-  var _useState185 = useState(defaultOpen),
-    _useState186 = _slicedToArray(_useState185, 2),
-    open = _useState186[0],
-    setOpen = _useState186[1];
+  var _useState189 = useState(defaultOpen),
+    _useState190 = _slicedToArray(_useState189, 2),
+    open = _useState190[0],
+    setOpen = _useState190[1];
   var t = darkMode ? {
     card: "#222222",
     border: "#303030",
