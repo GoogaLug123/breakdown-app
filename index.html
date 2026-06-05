@@ -1505,19 +1505,22 @@ function HomePage(_ref3) {
       color: t.muted,
       marginBottom: 6
     }
-  }, "Tap an event to log an error or infringement."), /*#__PURE__*/React.createElement("div", {
+  }, "Tap an event to log an error or infringement."), /*#__PURE__*/React.createElement("style", null, "@keyframes possFlash { 0%,100%{opacity:1;} 50%{opacity:0.25;} } .poss-flash{animation:possFlash 0.85s ease-in-out infinite;}"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
       marginBottom: 8
     }
-  }, [["bjru", "BJRU", t.gold], ["oppo", "OPPO", "#ffffff"]].map(function (_ref7) {
+  }, [["bjru", "Wolves", t.gold], ["oppo", oppoName || "OPPO", "#ffffff"]].map(function (_ref7) {
     var _ref8 = _slicedToArray(_ref7, 3),
       team = _ref8[0],
       label = _ref8[1],
       col = _ref8[2];
+    var isSelected = possession === team;
+    var shouldFlash = possession === null && halfRunning;
     return /*#__PURE__*/React.createElement("button", {
       key: team,
+      className: shouldFlash ? "poss-flash" : "",
       onClick: function onClick() {
         haptic();
         if (possession === team) return;
@@ -1536,9 +1539,9 @@ function HomePage(_ref3) {
       style: {
         flex: 1,
         padding: "10px 4px",
-        backgroundColor: possession === team ? col : "transparent",
-        color: possession === team ? team === "oppo" ? "#000" : "#000" : t.muted,
-        border: "2px solid ".concat(possession === team ? col : t.border),
+        backgroundColor: isSelected ? col : "transparent",
+        color: isSelected ? "#000" : shouldFlash ? col : t.muted,
+        border: "2px solid ".concat(isSelected ? col : shouldFlash ? col : t.border),
         borderRadius: 6,
         fontSize: 12,
         fontWeight: 700,
@@ -2497,7 +2500,7 @@ function NotesPage(_ref12) {
       return setGamePlan(e.target.value);
     },
     placeholder: "Tactical notes and game plan\u2026",
-    rows: 3,
+    rows: 4,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -2577,7 +2580,7 @@ function NotesPage(_ref12) {
       return setGamePlan2(e.target.value);
     },
     placeholder: "Tactical notes and game plan\u2026",
-    rows: 3,
+    rows: 4,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -2587,7 +2590,7 @@ function NotesPage(_ref12) {
       return setOpposition2(e.target.value);
     },
     placeholder: "Notes on the opposition\u2026",
-    rows: 3,
+    rows: 4,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -3288,7 +3291,7 @@ function MatchPage(_ref15) {
       color: t.gold,
       letterSpacing: "0.18em",
       textTransform: "uppercase",
-      marginTop: 0,
+      marginTop: 20,
       marginBottom: 6
     }
   }, "Game Events"), function () {
@@ -6446,7 +6449,7 @@ function Breakdown() {
       marginBottom: 10,
       lineHeight: 1.5
     }
-  }, "Select players not available today. They will be hidden from all lists."), /*#__PURE__*/React.createElement("div", {
+  }, "Select players not available today."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -6475,7 +6478,7 @@ function Breakdown() {
         padding: "5px 10px",
         backgroundColor: isUnavail ? t.danger + "22" : "transparent",
         border: "1px solid ".concat(isUnavail ? t.danger : t.border),
-        borderRadius: 20,
+        borderRadius: 8,
         color: isUnavail ? t.danger : t.muted,
         fontSize: 11,
         fontWeight: isUnavail ? 700 : 400,
@@ -6644,7 +6647,7 @@ function Breakdown() {
       color: t.text,
       marginBottom: 4
     }
-  }, "Default Sub Timer"), /*#__PURE__*/React.createElement("div", {
+  }, "Default Bench Time"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: t.muted,
