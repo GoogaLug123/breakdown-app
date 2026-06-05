@@ -2385,6 +2385,11 @@ function NotesPage(_ref12) {
     generateCoachesReport = ctx.generateCoachesReport,
     generateTalkingPoints = ctx.generateTalkingPoints,
     talkingPointsLoading = ctx.talkingPointsLoading,
+    generatePostGame = ctx.generatePostGame,
+    postGameLoading = ctx.postGameLoading,
+    postGameMotmError = ctx.postGameMotmError,
+    savedToLog = ctx.savedToLog,
+    saveToSeasonLog = ctx.saveToSeasonLog,
     halfSnapshot = ctx.halfSnapshot,
     halfBorderVisible = ctx.halfBorderVisible,
     matchEnded = ctx.matchEnded,
@@ -2392,7 +2397,9 @@ function NotesPage(_ref12) {
     weather = ctx.weather,
     unavailablePlayers = ctx.unavailablePlayers,
     availablePlayers = ctx.availablePlayers,
-    playerImpact = ctx.playerImpact;
+    playerImpact = ctx.playerImpact,
+    scoreHistory = ctx.scoreHistory,
+    captain = ctx.captain;
   var taStyle = {
     width: "100%",
     backgroundColor: t.card,
@@ -2649,6 +2656,14 @@ function NotesPage(_ref12) {
       count = _top$[1];
     var displayName = name === "extra1" || name === "extra2" ? extraNames[name] || null : name;
     if (!displayName) return null;
+    // Tries and conversions for this player
+    var pTries = scoreHistory.filter(function (e) {
+      return e.team === "bjru" && e.type === "Try" && e.scorer === displayName;
+    }).length;
+    var pConv = scoreHistory.filter(function (e) {
+      return e.team === "bjru" && e.type === "Conv" && (e.scorer === displayName || e.kicker === displayName);
+    }).length;
+    var extras = [pTries > 0 ? pTries + (pTries === 1 ? " try" : " tries") : null, pConv > 0 ? pConv + (pConv === 1 ? " conversion" : " conversions") : null].filter(Boolean).join(", ");
     return /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
@@ -2662,7 +2677,7 @@ function NotesPage(_ref12) {
         color: t.gold,
         fontWeight: 700
       }
-    }, displayName), " (", count, " positive ", count === 1 ? "involvement" : "involvements", ")");
+    }, displayName), " \u2014 ", count, " positive ", count === 1 ? "involvement" : "involvements", extras ? ", " + extras : "");
   }(), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
@@ -2747,6 +2762,42 @@ function NotesPage(_ref12) {
     }
   }, motmReason)), /*#__PURE__*/React.createElement("div", {
     style: {
+      height: 1,
+      backgroundColor: t.border,
+      margin: "8px 0 16px"
+    }
+  }), postGameMotmError && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: t.danger,
+      marginBottom: 8,
+      textAlign: "center"
+    }
+  }, "Please select a Man of the Match first."), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      haptic();
+      generatePostGame();
+    },
+    disabled: postGameLoading,
+    style: {
+      width: "100%",
+      padding: "13px",
+      backgroundColor: postGameLoading ? t.border : t.gold,
+      color: postGameLoading ? t.muted : "#000",
+      border: "none",
+      borderRadius: 8,
+      fontWeight: 700,
+      fontSize: 14,
+      cursor: postGameLoading ? "default" : "pointer",
+      marginBottom: 16,
+      fontFamily: "'Inter', sans-serif"
+    }
+  }, postGameLoading ? "Generating…" : "✦ Generate Post-Game Summaries"), matchSummary && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
       fontSize: 11,
       color: t.gold,
       fontWeight: 700,
@@ -2755,47 +2806,12 @@ function NotesPage(_ref12) {
     }
   }, "MATCH SUMMARY"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
-      color: t.muted,
-      marginBottom: 10,
-      lineHeight: 1.5
-    }
-  }, "Generate a short positive summary to share with parents."), /*#__PURE__*/React.createElement("button", {
-    onClick: function onClick() {
-      haptic();
-      generateSummary(localPlayers);
-    },
-    disabled: summaryLoading,
-    style: {
-      width: "100%",
-      padding: "11px",
-      backgroundColor: summaryLoading ? t.border : t.gold,
-      color: summaryLoading ? t.muted : "#000",
-      border: "none",
-      borderRadius: 8,
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: summaryLoading ? "default" : "pointer",
-      marginBottom: 12,
-      fontFamily: "'Inter', sans-serif"
-    }
-  }, summaryLoading ? "Generating…" : "Generate Match Summary"), matchSummary && /*#__PURE__*/React.createElement("div", {
-    style: {
       backgroundColor: t.surface,
       border: "1px solid ".concat(t.gold),
       borderRadius: 8,
-      padding: 14,
-      marginBottom: 16
+      padding: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: t.gold,
-      fontWeight: 700,
-      letterSpacing: "0.15em",
-      marginBottom: 8
-    }
-  }, "MATCH SUMMARY"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: t.text,
@@ -2816,48 +2832,24 @@ function NotesPage(_ref12) {
       fontSize: 11,
       cursor: "pointer"
     }
-  }, "Copy to clipboard")), /*#__PURE__*/React.createElement("div", {
+  }, "Copy to clipboard"))), coachesReport && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: t.gold,
       fontWeight: 700,
       letterSpacing: "0.12em",
-      marginTop: 16,
       marginBottom: 8
     }
   }, "COACHES REPORT"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
-      color: t.muted,
-      marginBottom: 8,
-      lineHeight: 1.5
-    }
-  }, "An analytical breakdown of the match with strengths, weaknesses and training work-ons. Coach-facing."), /*#__PURE__*/React.createElement("button", {
-    onClick: function onClick() {
-      haptic();
-      generateCoachesReport();
-    },
-    disabled: reportLoading,
-    style: {
-      width: "100%",
-      padding: "11px",
-      backgroundColor: reportLoading ? t.border : t.gold,
-      color: reportLoading ? t.muted : "#000",
-      border: "none",
-      borderRadius: 8,
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: reportLoading ? "default" : "pointer",
-      marginBottom: 12,
-      fontFamily: "'Inter', sans-serif"
-    }
-  }, reportLoading ? "Generating…" : "Generate Coaches Report"), coachesReport && /*#__PURE__*/React.createElement("div", {
-    style: {
       backgroundColor: t.card,
       border: "1px solid ".concat(t.border),
       borderRadius: 8,
-      padding: 14,
-      marginBottom: 16
+      padding: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2881,7 +2873,59 @@ function NotesPage(_ref12) {
       fontSize: 11,
       cursor: "pointer"
     }
-  }, "Copy to clipboard")))));
+  }, "Copy to clipboard"))), function () {
+    var canSave = matchSummary && coachesReport && motm;
+    var helpText = !matchSummary && !coachesReport ? "Generate summaries and select MOTM to save." : !matchSummary || !coachesReport ? "Generate summaries to save." : !motm ? "Select MOTM to save." : null;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 24
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 1,
+        backgroundColor: t.border,
+        margin: "8px 0 14px"
+      }
+    }), helpText && !savedToLog && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: t.muted,
+        marginBottom: 8,
+        textAlign: "center",
+        fontStyle: "italic"
+      }
+    }, helpText), savedToLog ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: "100%",
+        padding: "13px",
+        backgroundColor: "#2a9a44" + "22",
+        border: "1px solid #2a9a44",
+        borderRadius: 8,
+        textAlign: "center",
+        fontSize: 14,
+        fontWeight: 700,
+        color: "#2a9a44"
+      }
+    }, "\u2713 Saved to Season Log") : /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        haptic();
+        saveToSeasonLog();
+      },
+      disabled: !canSave,
+      style: {
+        width: "100%",
+        padding: "13px",
+        backgroundColor: canSave ? t.gold : t.surface,
+        color: canSave ? "#000" : t.muted,
+        border: canSave ? "none" : "1px solid ".concat(t.border),
+        borderRadius: 8,
+        fontWeight: 700,
+        fontSize: 14,
+        cursor: canSave ? "pointer" : "default",
+        fontFamily: "'Inter', sans-serif"
+      }
+    }, "Save to Season Log"));
+  }())));
 }
 function MatchPage(_ref15) {
   var ctx = _ref15.ctx;
@@ -4724,17 +4768,13 @@ function MatchPage(_ref15) {
       return e.type === "-" && e.stamp;
     });
 
-    // Parse stamp e.g. "14'" → 14
+    // Parse stamp — already absolute (getStamp adds 20 for H2)
     var parseMin = function parseMin(stamp) {
       var m = parseInt(stamp);
       return isNaN(m) ? 0 : m;
     };
-
-    // Build buckets: index 0=0-4', 1=5-9', ... 7=35-39'
-    // For H2 events we offset by 20 (assuming 20min halves)
     var getMinute = function getMinute(e) {
-      var base = parseMin(e.stamp);
-      return e.half === 2 ? base + 20 : base;
+      return parseMin(e.stamp);
     };
     var posBuckets = Array(BUCKETS).fill(0);
     var negBuckets = Array(BUCKETS).fill(0);
@@ -6680,38 +6720,47 @@ function Breakdown() {
         });
         return after.slice(0, endIdx).trim();
       };
-      var appendSep = ' | AI: ';
+      var AI_SEP = "\n— AI —\n";
+      var stripAI = function stripAI(existing) {
+        if (!existing) return "";
+        var sepIdx = existing.indexOf(AI_SEP);
+        return sepIdx > -1 ? existing.slice(0, sepIdx).trimEnd() : existing;
+      };
+      var appendAI = function appendAI(prev, aiText) {
+        var manual = stripAI(prev);
+        return manual ? manual + AI_SEP + aiText : aiText;
+      };
       if (isHalf) {
         if (parse('GAME PLAN')) setGamePlan(function (prev) {
-          return prev ? prev + appendSep + parse('GAME PLAN') : parse('GAME PLAN');
+          return appendAI(prev, parse('GAME PLAN'));
         });
         if (parse('OPPOSITION')) setOpposition(function (prev) {
-          return prev ? prev + appendSep + parse('OPPOSITION') : parse('OPPOSITION');
+          return appendAI(prev, parse('OPPOSITION'));
         });
         if (parse('POSITIVES')) setPositives(function (prev) {
-          return prev ? prev + appendSep + parse('POSITIVES') : parse('POSITIVES');
+          return appendAI(prev, parse('POSITIVES'));
         });
         if (parse('WORK-ONS')) setWorkOns(function (prev) {
-          return prev ? prev + appendSep + parse('WORK-ONS') : parse('WORK-ONS');
+          return appendAI(prev, parse('WORK-ONS'));
         });
         if (parse('HIGHLIGHTS')) setHighlights(function (prev) {
-          return prev ? prev + appendSep + parse('HIGHLIGHTS') : parse('HIGHLIGHTS');
+          return appendAI(prev, parse('HIGHLIGHTS'));
         });
       } else {
         if (parse('GAME PLAN')) setGamePlan2(function (prev) {
-          return prev ? prev + appendSep + parse('GAME PLAN') : parse('GAME PLAN');
+          return appendAI(prev, parse('GAME PLAN'));
         });
         if (parse('OPPOSITION')) setOpposition2(function (prev) {
-          return prev ? prev + appendSep + parse('OPPOSITION') : parse('OPPOSITION');
+          return appendAI(prev, parse('OPPOSITION'));
         });
         if (parse('POSITIVES')) setPositives2(function (prev) {
-          return prev ? prev + appendSep + parse('POSITIVES') : parse('POSITIVES');
+          return appendAI(prev, parse('POSITIVES'));
         });
         if (parse('WORK-ONS')) setWorkOns2(function (prev) {
-          return prev ? prev + appendSep + parse('WORK-ONS') : parse('WORK-ONS');
+          return appendAI(prev, parse('WORK-ONS'));
         });
         if (parse('HIGHLIGHTS')) setHighlights2(function (prev) {
-          return prev ? prev + appendSep + parse('HIGHLIGHTS') : parse('HIGHLIGHTS');
+          return appendAI(prev, parse('HIGHLIGHTS'));
         });
       }
     })["catch"](function () {})["finally"](function () {
@@ -6719,6 +6768,85 @@ function Breakdown() {
         return Object.assign({}, prev, _defineProperty({}, half, false));
       });
     });
+  };
+  var _useState187 = useState(false),
+    _useState188 = _slicedToArray(_useState187, 2),
+    postGameLoading = _useState188[0],
+    setPostGameLoading = _useState188[1];
+  var _useState189 = useState(false),
+    _useState190 = _slicedToArray(_useState189, 2),
+    postGameMotmError = _useState190[0],
+    setPostGameMotmError = _useState190[1];
+  var _useState191 = useState(false),
+    _useState192 = _slicedToArray(_useState191, 2),
+    savedToLog = _useState192[0],
+    setSavedToLog = _useState192[1];
+  var generatePostGame = function generatePostGame() {
+    if (!motm) {
+      setPostGameMotmError(true);
+      setTimeout(function () {
+        return setPostGameMotmError(false);
+      }, 3000);
+      return;
+    }
+    setPostGameMotmError(false);
+    setPostGameLoading(true);
+    generateSummary(availablePlayers);
+    generateCoachesReport();
+    setTimeout(function () {
+      return setPostGameLoading(false);
+    }, 10000);
+  };
+  var saveToSeasonLog = function saveToSeasonLog() {
+    var gameData = {
+      id: Date.now(),
+      savedAt: new Date().toISOString(),
+      date: new Date().toLocaleDateString("en-AU"),
+      oppoName: oppoName,
+      locationWeather: locationWeather,
+      weather: weather,
+      gameTime: gameTime,
+      preGameNotes: preGameNotes,
+      captain: captain,
+      startingSubs: startingSubs,
+      unavailablePlayers: unavailablePlayers,
+      scrumContested: scrumContested,
+      extraNames: extraNames,
+      scoreBjru: scoreBjru,
+      scoreOppo: scoreOppo,
+      scoreHistory: scoreHistory,
+      otherEvents: otherEvents,
+      playerImpact: playerImpact,
+      possession: possession,
+      possessionLog: possessionLog,
+      halfTimer: halfTimer,
+      halfHalf: halfHalf,
+      halfSnapshot: halfSnapshot,
+      playerTimers: playerTimers,
+      interchangeLog: interchangeLog,
+      motm: motm,
+      motmReason: motmReason,
+      matchSummary: matchSummary,
+      coachesReport: coachesReport,
+      gamePlan: gamePlan,
+      opposition: opposition,
+      positives: positives,
+      workOns: workOns,
+      highlights: highlights,
+      gamePlan2: gamePlan2,
+      opposition2: opposition2,
+      positives2: positives2,
+      workOns2: workOns2,
+      highlights2: highlights2
+    };
+    try {
+      var existing = JSON.parse(localStorage.getItem("breakdown_season_v1") || "[]");
+      existing.unshift(gameData);
+      localStorage.setItem("breakdown_season_v1", JSON.stringify(existing));
+      setSavedToLog(true);
+    } catch (e) {
+      alert("Could not save — storage may be full.");
+    }
   };
   var sendChat = React.useCallback(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
     var userMsg, _data$content3, res, data, reply, _t3;
@@ -7091,7 +7219,7 @@ function Breakdown() {
       setMatchEnded: setMatchEnded,
       showEndConfirm: showEndConfirm,
       setShowEndConfirm: setShowEndConfirm
-    }, _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "matchEnded", matchEnded), "setMatchEnded", setMatchEnded), "showEndConfirm", showEndConfirm), "setShowEndConfirm", setShowEndConfirm), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "sinBinActive", sinBinActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSinBinActive", setSinBinActive), "sinBinTime", sinBinTime), "setSinBinTime", setSinBinTime), "sinBinLabel", sinBinLabel), "setSinBinLabel", setSinBinLabel), "scoreBjru", scoreBjru), "scoreOppo", scoreOppo), "scoreHistory", scoreHistory), "awaitConv", awaitConv), "scoreTry", scoreTry), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "scoreConv", scoreConv), "scoreUndo", scoreUndo), "getStamp", getStamp), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "locationWeather", locationWeather), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setLocationWeather", setLocationWeather), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "extraNames", extraNames), "setExtraNames", setExtraNames), "playerImpact", playerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPlayerImpact", setPlayerImpact), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "highlights", highlights), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHighlights", setHighlights), "subTimer1Active", subTimer1Active), "subTimer1Time", subTimer1Time), "subTimer1Label", subTimer1Label), "setSubTimer1Active", setSubTimer1Active), "setSubTimer1Time", setSubTimer1Time), "setSubTimer1Label", setSubTimer1Label), "subTimer2Active", subTimer2Active), "subTimer2Time", subTimer2Time), "subTimer2Label", subTimer2Label), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSubTimer2Active", setSubTimer2Active), "setSubTimer2Time", setSubTimer2Time), "setSubTimer2Label", setSubTimer2Label), "subTimer3Active", subTimer3Active), "subTimer3Time", subTimer3Time), "subTimer3Label", subTimer3Label), "setSubTimer3Active", setSubTimer3Active), "setSubTimer3Time", setSubTimer3Time), "setSubTimer3Label", setSubTimer3Label), "subTimer4Active", subTimer4Active), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "subTimer4Time", subTimer4Time), "subTimer4Label", subTimer4Label), "setSubTimer4Active", setSubTimer4Active), "setSubTimer4Time", setSubTimer4Time), "setSubTimer4Label", setSubTimer4Label), "setActiveTab", setActiveTab), "notesTab", notesTab), "setNotesTab", setNotesTab), "positives", positives), "setPositives", setPositives), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "workOns", workOns), "setWorkOns", setWorkOns), "motm", motm), "setMotm", setMotm), "motmReason", motmReason), "setMotmReason", setMotmReason), "matchSummary", matchSummary), "summaryLoading", summaryLoading), "generateSummary", generateSummary), "coachesReport", coachesReport), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCoachesReport", setCoachesReport), "reportLoading", reportLoading), "generateCoachesReport", generateCoachesReport), "generateTalkingPoints", generateTalkingPoints), "talkingPointsLoading", talkingPointsLoading), "generateTalkingPoints", generateTalkingPoints), "talkingPointsLoading", talkingPointsLoading), "expandedRule", expandedRule), "setExpandedRule", setExpandedRule), "expandedStep", expandedStep), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setExpandedStep", setExpandedStep), "expandedComp", expandedComp), "setExpandedComp", setExpandedComp), "expandedRole", expandedRole), "setExpandedRole", setExpandedRole));
+    }, _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "matchEnded", matchEnded), "setMatchEnded", setMatchEnded), "showEndConfirm", showEndConfirm), "setShowEndConfirm", setShowEndConfirm), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "sinBinActive", sinBinActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSinBinActive", setSinBinActive), "sinBinTime", sinBinTime), "setSinBinTime", setSinBinTime), "sinBinLabel", sinBinLabel), "setSinBinLabel", setSinBinLabel), "scoreBjru", scoreBjru), "scoreOppo", scoreOppo), "scoreHistory", scoreHistory), "awaitConv", awaitConv), "scoreTry", scoreTry), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "scoreConv", scoreConv), "scoreUndo", scoreUndo), "getStamp", getStamp), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "locationWeather", locationWeather), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setLocationWeather", setLocationWeather), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "extraNames", extraNames), "setExtraNames", setExtraNames), "playerImpact", playerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPlayerImpact", setPlayerImpact), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "highlights", highlights), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHighlights", setHighlights), "subTimer1Active", subTimer1Active), "subTimer1Time", subTimer1Time), "subTimer1Label", subTimer1Label), "setSubTimer1Active", setSubTimer1Active), "setSubTimer1Time", setSubTimer1Time), "setSubTimer1Label", setSubTimer1Label), "subTimer2Active", subTimer2Active), "subTimer2Time", subTimer2Time), "subTimer2Label", subTimer2Label), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSubTimer2Active", setSubTimer2Active), "setSubTimer2Time", setSubTimer2Time), "setSubTimer2Label", setSubTimer2Label), "subTimer3Active", subTimer3Active), "subTimer3Time", subTimer3Time), "subTimer3Label", subTimer3Label), "setSubTimer3Active", setSubTimer3Active), "setSubTimer3Time", setSubTimer3Time), "setSubTimer3Label", setSubTimer3Label), "subTimer4Active", subTimer4Active), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "subTimer4Time", subTimer4Time), "subTimer4Label", subTimer4Label), "setSubTimer4Active", setSubTimer4Active), "setSubTimer4Time", setSubTimer4Time), "setSubTimer4Label", setSubTimer4Label), "setActiveTab", setActiveTab), "notesTab", notesTab), "setNotesTab", setNotesTab), "positives", positives), "setPositives", setPositives), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "workOns", workOns), "setWorkOns", setWorkOns), "motm", motm), "setMotm", setMotm), "motmReason", motmReason), "setMotmReason", setMotmReason), "matchSummary", matchSummary), "summaryLoading", summaryLoading), "generateSummary", generateSummary), "coachesReport", coachesReport), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCoachesReport", setCoachesReport), "reportLoading", reportLoading), "generateCoachesReport", generateCoachesReport), "generateTalkingPoints", generateTalkingPoints), "talkingPointsLoading", talkingPointsLoading), "generatePostGame", generatePostGame), "postGameLoading", postGameLoading), "postGameMotmError", postGameMotmError), "savedToLog", savedToLog), "saveToSeasonLog", saveToSeasonLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "expandedRule", expandedRule), "setExpandedRule", setExpandedRule), "expandedStep", expandedStep), "setExpandedStep", setExpandedStep), "expandedComp", expandedComp), "setExpandedComp", setExpandedComp), "expandedRole", expandedRole), "setExpandedRole", setExpandedRole));
     if (activeTab === "home") return /*#__PURE__*/React.createElement(HomePage, {
       ctx: ctx,
       localPlayers: availablePlayers
@@ -7264,6 +7392,22 @@ function Breakdown() {
       });
       setNotesTab("full");
       setActiveTab("notes");
+      // Auto-recommend MOTM if not already set
+      if (!motm) {
+        var topPlayer = Object.entries(playerImpact).filter(function (_ref45) {
+          var _ref46 = _slicedToArray(_ref45, 2),
+            v = _ref46[1];
+          return v > 0;
+        }).sort(function (a, b) {
+          return b[1] - a[1];
+        })[0];
+        if (topPlayer) {
+          var pn = topPlayer[0] === "extra1" || topPlayer[0] === "extra2" ? extraNames[topPlayer[0]] || "" : topPlayer[0];
+          if (pn) setMotm(pn);
+        } else if (captain) {
+          setMotm(captain);
+        }
+      }
     },
     style: {
       flex: 1,
@@ -8206,13 +8350,13 @@ function Breakdown() {
 }
 
 // ── Checklist item — derives theme internally from darkMode ──────────────────
-function ChecklistItem(_ref45) {
-  var item = _ref45.item,
-    darkMode = _ref45.darkMode;
-  var _useState187 = useState(false),
-    _useState188 = _slicedToArray(_useState187, 2),
-    checked = _useState188[0],
-    setChecked = _useState188[1];
+function ChecklistItem(_ref47) {
+  var item = _ref47.item,
+    darkMode = _ref47.darkMode;
+  var _useState193 = useState(false),
+    _useState194 = _slicedToArray(_useState193, 2),
+    checked = _useState194[0],
+    setChecked = _useState194[1];
   var gold = darkMode ? "#F5A800" : "#c48400";
   var border = darkMode ? "#2a2a2a" : "#e0e0d8";
   var text = darkMode ? "#f0f0f0" : "#111111";
@@ -8261,19 +8405,19 @@ function ChecklistItem(_ref45) {
 
 // ── AccordionSection ──────────────────────────────────────────────────────────
 // Receives darkMode bool (not t object) to avoid resetting state on every render
-function AccordionSection(_ref46) {
-  var title = _ref46.title,
-    subtitle = _ref46.subtitle,
-    icon = _ref46.icon,
-    numberLabel = _ref46.numberLabel,
-    darkMode = _ref46.darkMode,
-    _ref46$defaultOpen = _ref46.defaultOpen,
-    defaultOpen = _ref46$defaultOpen === void 0 ? false : _ref46$defaultOpen,
-    children = _ref46.children;
-  var _useState189 = useState(defaultOpen),
-    _useState190 = _slicedToArray(_useState189, 2),
-    open = _useState190[0],
-    setOpen = _useState190[1];
+function AccordionSection(_ref48) {
+  var title = _ref48.title,
+    subtitle = _ref48.subtitle,
+    icon = _ref48.icon,
+    numberLabel = _ref48.numberLabel,
+    darkMode = _ref48.darkMode,
+    _ref48$defaultOpen = _ref48.defaultOpen,
+    defaultOpen = _ref48$defaultOpen === void 0 ? false : _ref48$defaultOpen,
+    children = _ref48.children;
+  var _useState195 = useState(defaultOpen),
+    _useState196 = _slicedToArray(_useState195, 2),
+    open = _useState196[0],
+    setOpen = _useState196[1];
   var t = darkMode ? {
     card: "#222222",
     border: "#303030",
@@ -8385,15 +8529,15 @@ function AccordionSection(_ref46) {
 }
 
 // ── ChatModal — stable external component to prevent keyboard dismiss ─────────
-function ChatModal(_ref47) {
-  var chatMessages = _ref47.chatMessages,
-    chatLoading = _ref47.chatLoading,
-    chatEndRef = _ref47.chatEndRef,
-    chatInput = _ref47.chatInput,
-    setChatInput = _ref47.setChatInput,
-    sendChat = _ref47.sendChat,
-    setChatOpen = _ref47.setChatOpen,
-    darkMode = _ref47.darkMode;
+function ChatModal(_ref49) {
+  var chatMessages = _ref49.chatMessages,
+    chatLoading = _ref49.chatLoading,
+    chatEndRef = _ref49.chatEndRef,
+    chatInput = _ref49.chatInput,
+    setChatInput = _ref49.setChatInput,
+    sendChat = _ref49.sendChat,
+    setChatOpen = _ref49.setChatOpen,
+    darkMode = _ref49.darkMode;
   var gold = darkMode ? "#F5A800" : "#c48400";
   var t = darkMode ? {
     bg: "#0d0d0d",
@@ -8588,15 +8732,15 @@ function ChatModal(_ref47) {
 
 // ── SubTimer — stable external component so input never remounts on keypress ──
 // Derives theme internally from darkMode bool — never receives t object as prop
-function SubTimer(_ref48) {
-  var label = _ref48.label,
-    active = _ref48.active,
-    time = _ref48.time,
-    playerLabel = _ref48.playerLabel,
-    setActive = _ref48.setActive,
-    setTime = _ref48.setTime,
-    setLabel = _ref48.setLabel,
-    darkMode = _ref48.darkMode;
+function SubTimer(_ref50) {
+  var label = _ref50.label,
+    active = _ref50.active,
+    time = _ref50.time,
+    playerLabel = _ref50.playerLabel,
+    setActive = _ref50.setActive,
+    setTime = _ref50.setTime,
+    setLabel = _ref50.setLabel,
+    darkMode = _ref50.darkMode;
   var gold = "#F5A800",
     goldDim = "#c48400";
   var c = darkMode ? {
