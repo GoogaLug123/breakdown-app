@@ -5840,52 +5840,50 @@ function Breakdown() {
     setReportLoading = _useState180[1];
   // ── Auto-save game state to localStorage ─────────────────────────────────
   var LS_KEY = "breakdown_game_v1";
-  var getSaveState = function getSaveState() {
-    return {
-      scoreBjru: scoreBjru,
-      scoreOppo: scoreOppo,
-      scoreHistory: scoreHistory,
-      otherEvents: otherEvents,
-      playerImpact: playerImpact,
-      possession: possession,
-      possessionLog: possessionLog,
-      halfTimer: halfTimer,
-      halfHalf: halfHalf,
-      halfRunning: halfRunning,
-      halfSnapshot: halfSnapshot,
-      halfLabel: halfLabel,
-      oppoName: oppoName,
-      locationWeather: locationWeather,
-      weather: weather,
-      gameTime: gameTime,
-      preGameNotes: preGameNotes,
-      captain: captain,
-      startingSubs: startingSubs,
-      unavailablePlayers: unavailablePlayers,
-      scrumContested: scrumContested,
-      extraNames: extraNames,
-      playerTimers: playerTimers,
-      interchangeLog: interchangeLog,
-      matchEnded: matchEnded,
-      defaultSubMins: defaultSubMins,
-      awaitConv: awaitConv,
-      convName: convName,
-      pendingTeam: pendingTeam,
-      scorerName: scorerName,
-      sinBinActive: sinBinActive,
-      sinBinTime: sinBinTime,
-      sinBinLabel: sinBinLabel,
-      savedAt: Date.now()
-    };
-  };
 
   // Auto-save on every meaningful state change
   useEffect(function () {
-    if (showSplash) return; // don't save during splash
+    if (showSplash) return;
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify(getSaveState()));
+      var saveData = {
+        scoreBjru: scoreBjru,
+        scoreOppo: scoreOppo,
+        scoreHistory: scoreHistory,
+        otherEvents: otherEvents,
+        playerImpact: playerImpact,
+        possession: possession,
+        possessionLog: possessionLog,
+        halfTimer: halfTimer,
+        halfHalf: halfHalf,
+        halfRunning: halfRunning,
+        halfSnapshot: halfSnapshot,
+        halfLabel: halfLabel,
+        oppoName: oppoName,
+        locationWeather: locationWeather,
+        weather: weather,
+        gameTime: gameTime,
+        preGameNotes: preGameNotes,
+        captain: captain,
+        startingSubs: startingSubs,
+        unavailablePlayers: unavailablePlayers,
+        scrumContested: scrumContested,
+        extraNames: extraNames,
+        playerTimers: playerTimers,
+        interchangeLog: interchangeLog,
+        matchEnded: matchEnded,
+        defaultSubMins: defaultSubMins,
+        awaitConv: awaitConv,
+        convName: convName,
+        pendingTeam: pendingTeam,
+        scorerName: scorerName,
+        sinBinActive: sinBinActive,
+        sinBinTime: sinBinTime,
+        sinBinLabel: sinBinLabel,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(saveData));
     } catch (e) {}
-  }, [scoreBjru, scoreOppo, scoreHistory, otherEvents, playerImpact, possession, halfTimer, halfHalf, halfRunning, matchEnded, oppoName, locationWeather, weather, gameTime]);
+  }, [scoreBjru, scoreOppo, scoreHistory, otherEvents, playerImpact, possession, possessionLog, halfTimer, halfHalf, halfRunning, matchEnded, oppoName, locationWeather, weather, gameTime, preGameNotes, captain, startingSubs, playerTimers, interchangeLog, sinBinActive, sinBinTime]);
 
   // Check for saved game on load
   var _useState181 = useState(false),
