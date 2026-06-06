@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="theme-color" content="#0d0d0d"/><title>Breakdown · Balmain U11</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/><style>*,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;background:#0d0d0d;min-height:100vh;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;}#root{min-height:100vh;}*{-webkit-overflow-scrolling:touch;}::-webkit-scrollbar{width:0;height:0;}</style></head><body><div id="root"></div><script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script><script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script><script>const { useState, useEffect, useRef } = React;
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="theme-color" content="#0d0d0d"/><title>Breakdown · Balmain Rugby</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/><style>*,*::before,*::after{box-sizing:border-box;}html,body{margin:0;padding:0;background:#0d0d0d;min-height:100vh;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;}#root{min-height:100vh;}*{-webkit-overflow-scrolling:touch;}::-webkit-scrollbar{width:0;height:0;}</style></head><body><div id="root"></div><script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script><script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script><script>const { useState, useEffect, useRef } = React;
 
 "use strict";
 
@@ -58,7 +58,7 @@ function SplashScreen() {
     src: WOLF_B64,
     alt: "Balmain Wolves",
     style: {
-      width: 147,
+      width: 118,
       height: "auto",
       display: "block"
     }
@@ -121,7 +121,7 @@ var ICONS = {
   chevron: "M9 18l6-6-6-6",
   roles: ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8A4 4 0 009 7z"],
   shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-  ball: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M12 2c0 0-4 4-4 10s4 10 4 10", "M12 2c0 0 4 4 4 10s-4 10-4 10", "M2.5 9h19", "M2.5 15h19"],
+  ball: ["M12 3.5C9 3.5 5 6 3.5 9.5c-1.5 3.5-.5 7.5 2 10 2.5 2.5 6.5 3.5 10 2 3.5-1.5 6-5.5 6-9s-2.5-7.5-6-8.5C14.5 3.7 13.2 3.5 12 3.5z", "M7 7l10 10", "M7 12h10", "M12 7v10"],
   headinjury: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M12 8v5l3 3"],
   medic: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M12 8v8", "M8 12h8"],
   water: ["M12 2L4.5 14a8 8 0 1015 0L12 2z"],
@@ -844,19 +844,19 @@ function HomePage(_ref3) {
     }
   }, scoreBjru), /*#__PURE__*/React.createElement("button", {
     onClick: scoreUndo,
-    disabled: scoreHistory.length === 0,
+    disabled: scoreHistory.length === 0 && otherEvents.length === 0,
     style: {
       padding: "6px 9px",
       fontSize: 14,
       fontWeight: 700,
       borderRadius: 6,
-      cursor: scoreHistory.length > 0 ? "pointer" : "default",
+      cursor: scoreHistory.length > 0 || otherEvents.length > 0 ? "pointer" : "default",
       fontFamily: "'Inter', sans-serif",
       flexShrink: 0,
       lineHeight: 1,
       backgroundColor: t.surface,
       border: "1px solid ".concat(t.border),
-      opacity: scoreHistory.length > 0 ? 1 : 0.35
+      opacity: scoreHistory.length > 0 || otherEvents.length > 0 ? 1 : 0.35
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1927,7 +1927,7 @@ function HomePage(_ref3) {
         });
       },
       style: {
-        width: 28,
+        width: 32,
         height: 36,
         backgroundColor: t.surface,
         border: "1px solid ".concat(t.border),
@@ -1959,7 +1959,7 @@ function HomePage(_ref3) {
         });
       },
       style: {
-        width: 28,
+        width: 32,
         height: 36,
         backgroundColor: t.surface,
         border: "1px solid ".concat(t.border),
@@ -2007,7 +2007,7 @@ function RulesPage(_ref9) {
       marginBottom: 14,
       lineHeight: 1.5
     }
-  }, "SJRU Under 11s \u2014 Modified World Rugby Pathway Laws. Official, established rules. Tap to expand."), RULES.map(function (rule) {
+  }, "Official RA, WR and SJRU Competition Rules"), RULES.map(function (rule) {
     return /*#__PURE__*/React.createElement("div", {
       key: rule.id,
       style: s.card
@@ -2420,9 +2420,12 @@ function NotesPage(_ref12) {
     color: t.text,
     fontSize: 13,
     lineHeight: 1.6,
-    resize: "none",
+    resize: "vertical",
     boxSizing: "border-box",
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Inter', sans-serif",
+    marginBottom: 10,
+    outline: "none",
+    minHeight: 56
   };
   var labelStyle = {
     fontSize: 11,
@@ -2521,7 +2524,7 @@ function NotesPage(_ref12) {
       return setGamePlan(e.target.value);
     },
     placeholder: "Tactical notes and game plan\u2026",
-    rows: 4,
+    rows: 2,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -2601,7 +2604,7 @@ function NotesPage(_ref12) {
       return setGamePlan2(e.target.value);
     },
     placeholder: "Tactical notes and game plan\u2026",
-    rows: 4,
+    rows: 2,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -2611,7 +2614,7 @@ function NotesPage(_ref12) {
       return setOpposition2(e.target.value);
     },
     placeholder: "Notes on the opposition\u2026",
-    rows: 4,
+    rows: 2,
     style: taStyle
   }), /*#__PURE__*/React.createElement("div", {
     style: labelStyle
@@ -6327,18 +6330,36 @@ function Breakdown() {
     setConvName("");
   };
   var scoreUndo = function scoreUndo() {
-    if (scoreHistory.length === 0) return;
     haptic();
-    var last = scoreHistory[scoreHistory.length - 1];
-    if (last.team === "bjru") setScoreBjru(function (s) {
-      return Math.max(0, s - last.pts);
-    });else setScoreOppo(function (s) {
-      return Math.max(0, s - last.pts);
-    });
-    setScoreHistory(function (h) {
-      return h.slice(0, -1);
-    });
-    if (awaitConv) setAwaitConv(null);
+    var lastScore = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1] : null;
+    var lastEvent = otherEvents.length > 0 ? otherEvents[otherEvents.length - 1] : null;
+    if (!lastScore && !lastEvent) return;
+    var scoreTime = lastScore && lastScore.stamp ? parseInt(lastScore.stamp) || 0 : -1;
+    var eventTime = lastEvent && lastEvent.stamp ? parseInt(lastEvent.stamp) || 0 : -1;
+    if (lastScore && (!lastEvent || scoreTime >= eventTime)) {
+      if (lastScore.team === "bjru") setScoreBjru(function (s) {
+        return Math.max(0, s - lastScore.pts);
+      });else setScoreOppo(function (s) {
+        return Math.max(0, s - lastScore.pts);
+      });
+      setScoreHistory(function (h) {
+        return h.slice(0, -1);
+      });
+      if (awaitConv) setAwaitConv(null);
+    } else {
+      setOtherEvents(function (prev) {
+        return prev.slice(0, -1);
+      });
+      if (lastEvent.type === "+" && lastEvent.player) {
+        setPlayerImpact(function (prev) {
+          return _objectSpread(_objectSpread({}, prev), {}, _defineProperty({}, lastEvent.player, Math.max(0, (prev[lastEvent.player] || 0) - 1)));
+        });
+      } else if (lastEvent.type === "-" && lastEvent.player) {
+        setPlayerImpact(function (prev) {
+          return _objectSpread(_objectSpread({}, prev), {}, _defineProperty({}, lastEvent.player, (prev[lastEvent.player] || 0) + 1));
+        });
+      }
+    }
   };
   var generateSummary = /*#__PURE__*/function () {
     var _ref26 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
@@ -7251,7 +7272,7 @@ function Breakdown() {
     style: s.headerTitle
   }, "Breakdown"), /*#__PURE__*/React.createElement("div", {
     style: s.headerSub
-  }, "Balmain Rugby \xB7 U11"))), /*#__PURE__*/React.createElement("div", {
+  }, "Balmain Rugby"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -8028,13 +8049,6 @@ function Breakdown() {
       marginBottom: 4
     }
   }, "Unavailable Players"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: t.muted,
-      marginBottom: 10,
-      lineHeight: 1.5
-    }
-  }, "Select players not available today."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
