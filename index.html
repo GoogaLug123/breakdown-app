@@ -62,7 +62,14 @@ function SplashScreen() {
       height: "auto",
       display: "block"
     }
-  }));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "#555",
+      letterSpacing: "0.1em",
+      marginTop: 16
+    }
+  }, "v1.0"));
 }
 
 // Haptic feedback — uses Vibration API where available
@@ -121,7 +128,7 @@ var ICONS = {
   chevron: "M9 18l6-6-6-6",
   roles: ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8A4 4 0 009 7z"],
   shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-  ball: ["M12 3.5C9 3.5 5 6 3.5 9.5c-1.5 3.5-.5 7.5 2 10 2.5 2.5 6.5 3.5 10 2 3.5-1.5 6-5.5 6-9s-2.5-7.5-6-8.5C14.5 3.7 13.2 3.5 12 3.5z", "M7 7l10 10", "M7 12h10", "M12 7v10"],
+  ball: ["M3 21h18", "M4 21V13h4v8", "M10 21V7h4v14", "M16 21V3h4v18"],
   headinjury: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M12 8v5l3 3"],
   medic: ["M12 2a10 10 0 100 20A10 10 0 0012 2z", "M12 8v8", "M8 12h8"],
   water: ["M12 2L4.5 14a8 8 0 1015 0L12 2z"],
@@ -912,7 +919,7 @@ function HomePage(_ref3) {
       fontWeight: 700,
       marginBottom: 8
     }
-  }, pendingTeam === "bjru" ? "BJRU" : "Oppo", " Try \u2014 Scorer name (optional)"), /*#__PURE__*/React.createElement("div", {
+  }, "Try Scorer"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -2672,7 +2679,7 @@ function NotesPage(_ref12) {
     if (!displayName) return null;
     // Tries and conversions for this player
     var pTries = scoreHistory.filter(function (e) {
-      return e.team === "bjru" && e.type === "Try" && e.scorer === displayName;
+      return e.team === "bjru" && e.type === "Try Scorer" && e.scorer === displayName;
     }).length;
     var pConv = scoreHistory.filter(function (e) {
       return e.team === "bjru" && e.type === "Conv" && (e.scorer === displayName || e.kicker === displayName);
@@ -3400,7 +3407,7 @@ function MatchPage(_ref15) {
 
     // ── Conversion rate ───────────────────────────────────────────────
     var triesW = scoreHistory.filter(function (e) {
-      return e.team === "bjru" && e.type === "Try";
+      return e.team === "bjru" && e.type === "Try Scorer";
     }).length;
     var convsW = scoreHistory.filter(function (e) {
       return e.team === "bjru" && e.type === "Conv";
@@ -3469,41 +3476,55 @@ function MatchPage(_ref15) {
     var MetricRow = function MetricRow(_ref16) {
       var label = _ref16.label,
         wolves = _ref16.wolves,
-        mid = _ref16.mid,
         opp = _ref16.opp;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           alignItems: "center",
           borderBottom: "1px solid ".concat(t.border),
-          padding: "8px 12px"
+          padding: "6px 8px"
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          width: 56,
-          fontSize: 15,
-          fontWeight: 900,
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: 2
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 13,
+          fontWeight: 700,
           color: t.gold,
           fontFamily: "monospace",
+          width: 52,
           textAlign: "left"
         }
-      }, wolves), /*#__PURE__*/React.createElement("div", {
+      }, wolves)), /*#__PURE__*/React.createElement("div", {
         style: {
-          flex: 1,
+          flex: 2,
           textAlign: "center",
-          fontSize: 10,
-          color: t.muted
+          fontSize: 9,
+          color: t.muted,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase"
         }
       }, label), /*#__PURE__*/React.createElement("div", {
         style: {
-          width: 56,
-          fontSize: 15,
-          fontWeight: 900,
+          flex: 1,
+          display: "flex",
+          justifyContent: "flex-end"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 13,
+          fontWeight: 700,
           color: t.text,
           fontFamily: "monospace",
+          width: 52,
           textAlign: "right"
         }
-      }, opp));
+      }, opp)));
     };
     var ChartLabel = function ChartLabel(_ref17) {
       var label = _ref17.label,
@@ -3558,7 +3579,7 @@ function MatchPage(_ref15) {
     }), /*#__PURE__*/React.createElement(MetricRow, {
       label: "Avg Errors / 5min",
       wolves: errPer5,
-      opp: totalErrors + " total"
+      opp: "" + totalErrors
     }), /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "6px 12px",
@@ -3718,6 +3739,557 @@ function MatchPage(_ref15) {
       marginTop: 20,
       marginBottom: 6
     }
+  }, "Discipline Chart"), function () {
+    var discEvents = otherEvents.filter(function (e) {
+      return (e.sanction === "Penalty" || e.sanction === "Free Kick") && e.stamp;
+    });
+    if (discEvents.length === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: t.card,
+        border: "1px solid ".concat(t.border),
+        borderRadius: 8,
+        padding: "16px",
+        textAlign: "center",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: t.muted
+      }
+    }, "No discipline events yet."));
+
+    // Calculate max stack depth for dynamic height
+    var byMinuteCalc = {};
+    discEvents.forEach(function (e) {
+      var min = parseInt(e.stamp);
+      if (!isNaN(min)) {
+        if (!byMinuteCalc[min]) byMinuteCalc[min] = {
+          won: 0,
+          lost: 0
+        };
+        if (e.won) byMinuteCalc[min].won++;else byMinuteCalc[min].lost++;
+      }
+    });
+    var maxStack = Math.max.apply(Math, [1].concat(_toConsumableArray(Object.values(byMinuteCalc).map(function (m) {
+      return Math.max(m.won, m.lost);
+    }))));
+    var W = 320,
+      H = Math.max(100, 40 + maxStack * 28 + 28);
+    var PAD = {
+      top: 12,
+      right: 36,
+      bottom: 28,
+      left: 20
+    };
+    var chartW = W - PAD.left - PAD.right;
+    var chartH = H - PAD.top - PAD.bottom;
+    var xScale = function xScale(t2) {
+      return PAD.left + t2 / 40 * chartW;
+    };
+    var midY = PAD.top + chartH / 2;
+
+    // Group events by minute for stacking
+    var byMinute = {};
+    discEvents.forEach(function (e) {
+      var min = parseInt(e.stamp);
+      if (isNaN(min)) return;
+      if (!byMinute[min]) byMinute[min] = {
+        won: [],
+        lost: []
+      };
+      if (e.won) byMinute[min].won.push(e);else byMinute[min].lost.push(e);
+    });
+
+    // Render symbols
+    var symbols = [];
+    Object.entries(byMinute).forEach(function (_ref18) {
+      var _ref19 = _slicedToArray(_ref18, 2),
+        min = _ref19[0],
+        _ref19$ = _ref19[1],
+        won = _ref19$.won,
+        lost = _ref19$.lost;
+      var x = xScale(parseInt(min));
+      // Won events stack ABOVE midY
+      won.forEach(function (e, i) {
+        var y = midY - 8 - i * 9;
+        var isPen = e.type === "Pen Won";
+        if (isPen) {
+          // green triangle pointing up
+          symbols.push(/*#__PURE__*/React.createElement("polygon", {
+            key: "won-".concat(min, "-").concat(i),
+            points: "".concat(x, ",").concat(y - 4, " ").concat(x - 3, ",").concat(y + 2.5, " ").concat(x + 3, ",").concat(y + 2.5),
+            fill: "#2a9a44"
+          }));
+        } else {
+          // green circle
+          symbols.push(/*#__PURE__*/React.createElement("circle", {
+            key: "won-".concat(min, "-").concat(i),
+            cx: x,
+            cy: y,
+            r: 2.5,
+            fill: "#2a9a44"
+          }));
+        }
+      });
+      // Lost events stack BELOW midY
+      lost.forEach(function (e, i) {
+        var y = midY + 8 + i * 9;
+        var isPen = e.type === "Pen Lost";
+        if (isPen) {
+          // red triangle pointing down
+          symbols.push(/*#__PURE__*/React.createElement("polygon", {
+            key: "lost-".concat(min, "-").concat(i),
+            points: "".concat(x, ",").concat(y + 4, " ").concat(x - 3, ",").concat(y - 2.5, " ").concat(x + 3, ",").concat(y - 2.5),
+            fill: "#e03535"
+          }));
+        } else {
+          // red circle
+          symbols.push(/*#__PURE__*/React.createElement("circle", {
+            key: "lost-".concat(min, "-").concat(i),
+            cx: x,
+            cy: y,
+            r: 2.5,
+            fill: "#e03535"
+          }));
+        }
+      });
+    });
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: darkMode ? "#1a1500" : "#fffbe6",
+        border: "1px solid ".concat(darkMode ? "#4a3d00" : "#e8d060"),
+        borderRadius: 10,
+        padding: "14px 12px 10px",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      viewBox: "0 0 ".concat(W, " ").concat(H),
+      style: {
+        overflow: "hidden",
+        display: "block"
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: xScale(20),
+      y1: PAD.top,
+      x2: xScale(20),
+      y2: PAD.top + chartH,
+      stroke: darkMode ? "#444" : "#ccc",
+      strokeWidth: 1,
+      strokeDasharray: "4 3"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: PAD.left,
+      y1: midY,
+      x2: PAD.left + chartW,
+      y2: midY,
+      stroke: darkMode ? "#555" : "#bbb",
+      strokeWidth: 1
+    }), [0, 5, 10, 15, 20, 25, 30, 35, 40].map(function (min) {
+      return /*#__PURE__*/React.createElement("g", {
+        key: min
+      }, /*#__PURE__*/React.createElement("line", {
+        x1: xScale(min),
+        y1: PAD.top + chartH,
+        x2: xScale(min),
+        y2: PAD.top + chartH + 4,
+        stroke: t.muted,
+        strokeWidth: 0.8,
+        opacity: 0.5
+      }), /*#__PURE__*/React.createElement("text", {
+        x: xScale(min),
+        y: PAD.top + chartH + 14,
+        textAnchor: "middle",
+        fontSize: 7,
+        fill: t.muted,
+        opacity: 0.6
+      }, min, "'"));
+    }), /*#__PURE__*/React.createElement("text", {
+      x: PAD.left + chartW + 4,
+      y: midY - 8,
+      fontSize: 7,
+      fill: "#2a9a44",
+      textAnchor: "start"
+    }, "Won"), /*#__PURE__*/React.createElement("text", {
+      x: PAD.left + chartW + 4,
+      y: midY + 14,
+      fontSize: 7,
+      fill: "#e03535",
+      textAnchor: "start"
+    }, "Lost"), /*#__PURE__*/React.createElement("text", {
+      x: xScale(10),
+      y: PAD.top + chartH + 24,
+      textAnchor: "middle",
+      fontSize: 7,
+      fill: t.muted,
+      opacity: 0.4
+    }, "1st"), /*#__PURE__*/React.createElement("text", {
+      x: xScale(30),
+      y: PAD.top + chartH + 24,
+      textAnchor: "middle",
+      fontSize: 7,
+      fill: t.muted,
+      opacity: 0.4
+    }, "2nd"), symbols), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 12,
+        marginTop: 4,
+        flexWrap: "wrap"
+      }
+    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref20) {
+      var _ref21 = _slicedToArray(_ref20, 3),
+        sym = _ref21[0],
+        col = _ref21[1],
+        label = _ref21[2];
+      return /*#__PURE__*/React.createElement("div", {
+        key: label,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 4
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: col,
+          fontSize: 10
+        }
+      }, sym), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 10,
+          color: t.muted
+        }
+      }, label));
+    })));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 20,
+      marginBottom: 6
+    }
+  }, "Effort Chart"), function () {
+    var WINDOW = 5; // 5-minute buckets
+    var BUCKETS = 8; // 8 x 5min = 40min
+    var posEvents = otherEvents.filter(function (e) {
+      return e.type === "+" && e.stamp;
+    });
+    var negEvents = otherEvents.filter(function (e) {
+      return e.type === "-" && e.stamp;
+    });
+
+    // Parse stamp — already absolute (getStamp adds 20 for H2)
+    var parseMin = function parseMin(stamp) {
+      var m = parseInt(stamp);
+      return isNaN(m) ? 0 : m;
+    };
+    var getMinute = function getMinute(e) {
+      return parseMin(e.stamp);
+    };
+    var posBuckets = Array(BUCKETS).fill(0);
+    var negBuckets = Array(BUCKETS).fill(0);
+    posEvents.forEach(function (e) {
+      var min = Math.min(getMinute(e), 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) posBuckets[bucket]++;
+    });
+    negEvents.forEach(function (e) {
+      var min = Math.min(getMinute(e), 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) negBuckets[bucket]++;
+    });
+    var maxVal = Math.max.apply(Math, [1].concat(_toConsumableArray(posBuckets), _toConsumableArray(negBuckets)));
+    var BAR_MAX_H = 36;
+    var CHART_W = 280;
+    var BUCKET_W = CHART_W / BUCKETS;
+    var BAR_W = BUCKET_W * 0.55;
+    var MID_Y = 46;
+
+    // Avg time between positive involvements per half
+    var h1Pos = posEvents.filter(function (e) {
+      return e.half === 1;
+    }).sort(function (a, b) {
+      return parseMin(a.stamp) - parseMin(b.stamp);
+    });
+    var h2Pos = posEvents.filter(function (e) {
+      return e.half === 2;
+    }).sort(function (a, b) {
+      return parseMin(a.stamp) - parseMin(b.stamp);
+    });
+    var avgGap = function avgGap(arr) {
+      if (arr.length < 2) return null;
+      var total = 0;
+      for (var i = 1; i < arr.length; i++) total += parseMin(arr[i].stamp) - parseMin(arr[i - 1].stamp);
+      return (total / (arr.length - 1)).toFixed(1);
+    };
+    var h1Gap = avgGap(h1Pos);
+    var h2Gap = avgGap(h2Pos);
+    var totalPos = posEvents.length;
+    var totalNeg = negEvents.length;
+    if (totalPos === 0 && totalNeg === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: "#1a1a1a",
+        border: "1px solid #2a2a2a",
+        borderRadius: 8,
+        padding: 16,
+        textAlign: "center",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "#555"
+      }
+    }, "No involvement events yet."));
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: "#1a1a1a",
+        border: "1px solid #2a2a2a",
+        borderRadius: 8,
+        padding: "12px 10px",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      viewBox: "0 0 " + (CHART_W + 20) + " 110",
+      style: {
+        display: "block",
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "16",
+      y1: MID_Y,
+      x2: CHART_W + 16,
+      y2: MID_Y,
+      stroke: "#2a2a2a",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: 16 + CHART_W / 2,
+      y1: "0",
+      x2: 16 + CHART_W / 2,
+      y2: "100",
+      stroke: "#F5A800",
+      strokeWidth: "1",
+      strokeDasharray: "3,3",
+      opacity: "0.4"
+    }), posBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("rect", {
+        key: "p" + i,
+        x: x,
+        y: MID_Y - h,
+        width: BAR_W,
+        height: h,
+        fill: "#F5A800",
+        opacity: "0.85",
+        rx: "2"
+      });
+    }), negBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("rect", {
+        key: "n" + i,
+        x: x,
+        y: MID_Y,
+        width: BAR_W,
+        height: h,
+        fill: "#e03535",
+        opacity: "0.8",
+        rx: "2"
+      });
+    }), posBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("text", {
+        key: "pl" + i,
+        x: x,
+        y: MID_Y - h - 3,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#F5A800",
+        fontFamily: "monospace"
+      }, val);
+    }), negBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
+      var h = Math.max(4, val / maxVal * BAR_MAX_H);
+      return /*#__PURE__*/React.createElement("text", {
+        key: "nl" + i,
+        x: x,
+        y: MID_Y + h + 9,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#e03535",
+        fontFamily: "monospace"
+      }, val);
+    }), [0, 5, 10, 15, "HT", 25, 30, 35, 40].map(function (label, i) {
+      return /*#__PURE__*/React.createElement("text", {
+        key: "xl" + i,
+        x: 16 + i * BUCKET_W * (i < 4 ? 1 : 1),
+        y: "108",
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: label === "HT" ? "#F5A800" : "#444",
+        fontFamily: "monospace",
+        opacity: label === "HT" ? 0.7 : 1
+      }, label);
+    }), /*#__PURE__*/React.createElement("text", {
+      x: "12",
+      y: MID_Y - BAR_MAX_H + 4,
+      textAnchor: "end",
+      fontSize: "7",
+      fill: "#444",
+      fontFamily: "monospace"
+    }, "+"), /*#__PURE__*/React.createElement("text", {
+      x: "12",
+      y: MID_Y + BAR_MAX_H - 2,
+      textAnchor: "end",
+      fontSize: "7",
+      fill: "#444",
+      fontFamily: "monospace"
+    }, "\u2212")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 12,
+        marginTop: 4,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 9,
+        color: "#888"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        backgroundColor: "#F5A800",
+        borderRadius: 2
+      }
+    }), "Positive"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 9,
+        color: "#888"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        backgroundColor: "#e03535",
+        borderRadius: 2
+      }
+    }), "Negative")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2a2a2a",
+        paddingTop: 8,
+        display: "flex",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Avg gap \xB7 1st Half"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: "#F5A800",
+        fontFamily: "monospace"
+      }
+    }, h1Gap ? h1Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, h1Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Avg gap \xB7 2nd Half"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: "#F5A800",
+        fontFamily: "monospace"
+      }
+    }, h2Gap ? h2Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, h2Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        backgroundColor: "#111",
+        borderRadius: 6,
+        padding: "6px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 8,
+        color: "#555",
+        textTransform: "uppercase",
+        letterSpacing: "0.1em",
+        marginBottom: 2
+      }
+    }, "Net effort"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 900,
+        color: totalPos > totalNeg ? "#2a9a44" : totalPos < totalNeg ? "#e03535" : "#888",
+        fontFamily: "monospace"
+      }
+    }, totalPos > totalNeg ? "+" : "", totalPos - totalNeg), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#444"
+      }
+    }, totalPos, "+ \xB7 ", totalNeg, "\u2212"))));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 20,
+      marginBottom: 6
+    }
   }, "Discipline & Turnovers"), function () {
     var hh = function hh(pred, half) {
       return otherEvents.filter(function (e) {
@@ -3803,8 +4375,8 @@ function MatchPage(_ref15) {
     var twTot = allWon.length + spTurnW.tot;
     var tlTot = allLost.length + spTurnL.tot;
     var FS = 13;
-    var SH = function SH(_ref18) {
-      var label = _ref18.label;
+    var SH = function SH(_ref22) {
+      var label = _ref22.label;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "4px 8px",
@@ -3900,11 +4472,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref19) {
-      var lLabel = _ref19.lLabel,
-        lW = _ref19.lW,
-        rLabel = _ref19.rLabel,
-        rL = _ref19.rL;
+    var Row = function Row(_ref23) {
+      var lLabel = _ref23.lLabel,
+        lW = _ref23.lW,
+        rLabel = _ref23.rLabel,
+        rL = _ref23.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -4155,10 +4727,10 @@ function MatchPage(_ref15) {
       };
     };
     var tryW = hss(function (e) {
-      return e.team === "bjru" && e.type === "Try";
+      return e.team === "bjru" && e.type === "Try Scorer";
     });
     var tryL = hss(function (e) {
-      return e.team === "oppo" && e.type === "Try";
+      return e.team === "oppo" && e.type === "Try Scorer";
     });
     var cvW = hss(function (e) {
       return e.team === "bjru" && e.type === "Conv";
@@ -4246,11 +4818,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref20) {
-      var lLabel = _ref20.lLabel,
-        lW = _ref20.lW,
-        rLabel = _ref20.rLabel,
-        rL = _ref20.rL;
+    var Row = function Row(_ref24) {
+      var lLabel = _ref24.lLabel,
+        lW = _ref24.lW,
+        rLabel = _ref24.rLabel,
+        rL = _ref24.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -4413,10 +4985,10 @@ function MatchPage(_ref15) {
       return e.sanction === "Free Kick";
     });
     var tryW = hss(function (e) {
-      return e.team === "bjru" && e.type === "Try";
+      return e.team === "bjru" && e.type === "Try Scorer";
     });
     var tryL = hss(function (e) {
-      return e.team === "oppo" && e.type === "Try";
+      return e.team === "oppo" && e.type === "Try Scorer";
     });
     var cvW = hss(function (e) {
       return e.team === "bjru" && e.type === "Conv";
@@ -4451,8 +5023,8 @@ function MatchPage(_ref15) {
       return e.sanction === "Free Kick" && !e.won;
     });
     var FS = 13;
-    var SH = function SH(_ref21) {
-      var label = _ref21.label;
+    var SH = function SH(_ref25) {
+      var label = _ref25.label;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "4px 8px",
@@ -4548,11 +5120,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref22) {
-      var lLabel = _ref22.lLabel,
-        lW = _ref22.lW,
-        rLabel = _ref22.rLabel,
-        rL = _ref22.rL;
+    var Row = function Row(_ref26) {
+      var lLabel = _ref26.lLabel,
+        lW = _ref26.lW,
+        rLabel = _ref26.rLabel,
+        rL = _ref26.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -4893,557 +5465,6 @@ function MatchPage(_ref15) {
         textAlign: "center"
       }
     }, negL.h2))));
-  }(), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: t.gold,
-      letterSpacing: "0.18em",
-      textTransform: "uppercase",
-      marginTop: 20,
-      marginBottom: 6
-    }
-  }, "Discipline Chart"), function () {
-    var discEvents = otherEvents.filter(function (e) {
-      return (e.sanction === "Penalty" || e.sanction === "Free Kick") && e.stamp;
-    });
-    if (discEvents.length === 0) return /*#__PURE__*/React.createElement("div", {
-      style: {
-        backgroundColor: t.card,
-        border: "1px solid ".concat(t.border),
-        borderRadius: 8,
-        padding: "16px",
-        textAlign: "center",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: t.muted
-      }
-    }, "No discipline events yet."));
-
-    // Calculate max stack depth for dynamic height
-    var byMinuteCalc = {};
-    discEvents.forEach(function (e) {
-      var min = parseInt(e.stamp);
-      if (!isNaN(min)) {
-        if (!byMinuteCalc[min]) byMinuteCalc[min] = {
-          won: 0,
-          lost: 0
-        };
-        if (e.won) byMinuteCalc[min].won++;else byMinuteCalc[min].lost++;
-      }
-    });
-    var maxStack = Math.max.apply(Math, [1].concat(_toConsumableArray(Object.values(byMinuteCalc).map(function (m) {
-      return Math.max(m.won, m.lost);
-    }))));
-    var W = 320,
-      H = Math.max(100, 40 + maxStack * 28 + 28);
-    var PAD = {
-      top: 12,
-      right: 36,
-      bottom: 28,
-      left: 20
-    };
-    var chartW = W - PAD.left - PAD.right;
-    var chartH = H - PAD.top - PAD.bottom;
-    var xScale = function xScale(t2) {
-      return PAD.left + t2 / 40 * chartW;
-    };
-    var midY = PAD.top + chartH / 2;
-
-    // Group events by minute for stacking
-    var byMinute = {};
-    discEvents.forEach(function (e) {
-      var min = parseInt(e.stamp);
-      if (isNaN(min)) return;
-      if (!byMinute[min]) byMinute[min] = {
-        won: [],
-        lost: []
-      };
-      if (e.won) byMinute[min].won.push(e);else byMinute[min].lost.push(e);
-    });
-
-    // Render symbols
-    var symbols = [];
-    Object.entries(byMinute).forEach(function (_ref23) {
-      var _ref24 = _slicedToArray(_ref23, 2),
-        min = _ref24[0],
-        _ref24$ = _ref24[1],
-        won = _ref24$.won,
-        lost = _ref24$.lost;
-      var x = xScale(parseInt(min));
-      // Won events stack ABOVE midY
-      won.forEach(function (e, i) {
-        var y = midY - 8 - i * 9;
-        var isPen = e.type === "Pen Won";
-        if (isPen) {
-          // green triangle pointing up
-          symbols.push(/*#__PURE__*/React.createElement("polygon", {
-            key: "won-".concat(min, "-").concat(i),
-            points: "".concat(x, ",").concat(y - 4, " ").concat(x - 3, ",").concat(y + 2.5, " ").concat(x + 3, ",").concat(y + 2.5),
-            fill: "#2a9a44"
-          }));
-        } else {
-          // green circle
-          symbols.push(/*#__PURE__*/React.createElement("circle", {
-            key: "won-".concat(min, "-").concat(i),
-            cx: x,
-            cy: y,
-            r: 2.5,
-            fill: "#2a9a44"
-          }));
-        }
-      });
-      // Lost events stack BELOW midY
-      lost.forEach(function (e, i) {
-        var y = midY + 8 + i * 9;
-        var isPen = e.type === "Pen Lost";
-        if (isPen) {
-          // red triangle pointing down
-          symbols.push(/*#__PURE__*/React.createElement("polygon", {
-            key: "lost-".concat(min, "-").concat(i),
-            points: "".concat(x, ",").concat(y + 4, " ").concat(x - 3, ",").concat(y - 2.5, " ").concat(x + 3, ",").concat(y - 2.5),
-            fill: "#e03535"
-          }));
-        } else {
-          // red circle
-          symbols.push(/*#__PURE__*/React.createElement("circle", {
-            key: "lost-".concat(min, "-").concat(i),
-            cx: x,
-            cy: y,
-            r: 2.5,
-            fill: "#e03535"
-          }));
-        }
-      });
-    });
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        backgroundColor: darkMode ? "#1a1500" : "#fffbe6",
-        border: "1px solid ".concat(darkMode ? "#4a3d00" : "#e8d060"),
-        borderRadius: 10,
-        padding: "14px 12px 10px",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("svg", {
-      width: "100%",
-      viewBox: "0 0 ".concat(W, " ").concat(H),
-      style: {
-        overflow: "hidden",
-        display: "block"
-      }
-    }, /*#__PURE__*/React.createElement("line", {
-      x1: xScale(20),
-      y1: PAD.top,
-      x2: xScale(20),
-      y2: PAD.top + chartH,
-      stroke: darkMode ? "#444" : "#ccc",
-      strokeWidth: 1,
-      strokeDasharray: "4 3"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: PAD.left,
-      y1: midY,
-      x2: PAD.left + chartW,
-      y2: midY,
-      stroke: darkMode ? "#555" : "#bbb",
-      strokeWidth: 1
-    }), [0, 5, 10, 15, 20, 25, 30, 35, 40].map(function (min) {
-      return /*#__PURE__*/React.createElement("g", {
-        key: min
-      }, /*#__PURE__*/React.createElement("line", {
-        x1: xScale(min),
-        y1: PAD.top + chartH,
-        x2: xScale(min),
-        y2: PAD.top + chartH + 4,
-        stroke: t.muted,
-        strokeWidth: 0.8,
-        opacity: 0.5
-      }), /*#__PURE__*/React.createElement("text", {
-        x: xScale(min),
-        y: PAD.top + chartH + 14,
-        textAnchor: "middle",
-        fontSize: 7,
-        fill: t.muted,
-        opacity: 0.6
-      }, min, "'"));
-    }), /*#__PURE__*/React.createElement("text", {
-      x: PAD.left + chartW + 4,
-      y: midY - 8,
-      fontSize: 7,
-      fill: "#2a9a44",
-      textAnchor: "start"
-    }, "Won"), /*#__PURE__*/React.createElement("text", {
-      x: PAD.left + chartW + 4,
-      y: midY + 14,
-      fontSize: 7,
-      fill: "#e03535",
-      textAnchor: "start"
-    }, "Lost"), /*#__PURE__*/React.createElement("text", {
-      x: xScale(10),
-      y: PAD.top + chartH + 24,
-      textAnchor: "middle",
-      fontSize: 7,
-      fill: t.muted,
-      opacity: 0.4
-    }, "1st"), /*#__PURE__*/React.createElement("text", {
-      x: xScale(30),
-      y: PAD.top + chartH + 24,
-      textAnchor: "middle",
-      fontSize: 7,
-      fill: t.muted,
-      opacity: 0.4
-    }, "2nd"), symbols), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 12,
-        marginTop: 4,
-        flexWrap: "wrap"
-      }
-    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref25) {
-      var _ref26 = _slicedToArray(_ref25, 3),
-        sym = _ref26[0],
-        col = _ref26[1],
-        label = _ref26[2];
-      return /*#__PURE__*/React.createElement("div", {
-        key: label,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 4
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: col,
-          fontSize: 10
-        }
-      }, sym), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 10,
-          color: t.muted
-        }
-      }, label));
-    })));
-  }(), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: t.gold,
-      letterSpacing: "0.18em",
-      textTransform: "uppercase",
-      marginTop: 20,
-      marginBottom: 6
-    }
-  }, "Effort Chart"), function () {
-    var WINDOW = 5; // 5-minute buckets
-    var BUCKETS = 8; // 8 x 5min = 40min
-    var posEvents = otherEvents.filter(function (e) {
-      return e.type === "+" && e.stamp;
-    });
-    var negEvents = otherEvents.filter(function (e) {
-      return e.type === "-" && e.stamp;
-    });
-
-    // Parse stamp — already absolute (getStamp adds 20 for H2)
-    var parseMin = function parseMin(stamp) {
-      var m = parseInt(stamp);
-      return isNaN(m) ? 0 : m;
-    };
-    var getMinute = function getMinute(e) {
-      return parseMin(e.stamp);
-    };
-    var posBuckets = Array(BUCKETS).fill(0);
-    var negBuckets = Array(BUCKETS).fill(0);
-    posEvents.forEach(function (e) {
-      var min = Math.min(getMinute(e), 39);
-      var bucket = Math.floor(min / WINDOW);
-      if (bucket >= 0 && bucket < BUCKETS) posBuckets[bucket]++;
-    });
-    negEvents.forEach(function (e) {
-      var min = Math.min(getMinute(e), 39);
-      var bucket = Math.floor(min / WINDOW);
-      if (bucket >= 0 && bucket < BUCKETS) negBuckets[bucket]++;
-    });
-    var maxVal = Math.max.apply(Math, [1].concat(_toConsumableArray(posBuckets), _toConsumableArray(negBuckets)));
-    var BAR_MAX_H = 36;
-    var CHART_W = 280;
-    var BUCKET_W = CHART_W / BUCKETS;
-    var BAR_W = BUCKET_W * 0.55;
-    var MID_Y = 46;
-
-    // Avg time between positive involvements per half
-    var h1Pos = posEvents.filter(function (e) {
-      return e.half === 1;
-    }).sort(function (a, b) {
-      return parseMin(a.stamp) - parseMin(b.stamp);
-    });
-    var h2Pos = posEvents.filter(function (e) {
-      return e.half === 2;
-    }).sort(function (a, b) {
-      return parseMin(a.stamp) - parseMin(b.stamp);
-    });
-    var avgGap = function avgGap(arr) {
-      if (arr.length < 2) return null;
-      var total = 0;
-      for (var i = 1; i < arr.length; i++) total += parseMin(arr[i].stamp) - parseMin(arr[i - 1].stamp);
-      return (total / (arr.length - 1)).toFixed(1);
-    };
-    var h1Gap = avgGap(h1Pos);
-    var h2Gap = avgGap(h2Pos);
-    var totalPos = posEvents.length;
-    var totalNeg = negEvents.length;
-    if (totalPos === 0 && totalNeg === 0) return /*#__PURE__*/React.createElement("div", {
-      style: {
-        backgroundColor: "#1a1a1a",
-        border: "1px solid #2a2a2a",
-        borderRadius: 8,
-        padding: 16,
-        textAlign: "center",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "#555"
-      }
-    }, "No involvement events yet."));
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        backgroundColor: "#1a1a1a",
-        border: "1px solid #2a2a2a",
-        borderRadius: 8,
-        padding: "12px 10px",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("svg", {
-      width: "100%",
-      viewBox: "0 0 " + (CHART_W + 20) + " 110",
-      style: {
-        display: "block",
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("line", {
-      x1: "16",
-      y1: MID_Y,
-      x2: CHART_W + 16,
-      y2: MID_Y,
-      stroke: "#2a2a2a",
-      strokeWidth: "1"
-    }), /*#__PURE__*/React.createElement("line", {
-      x1: 16 + CHART_W / 2,
-      y1: "0",
-      x2: 16 + CHART_W / 2,
-      y2: "100",
-      stroke: "#F5A800",
-      strokeWidth: "1",
-      strokeDasharray: "3,3",
-      opacity: "0.4"
-    }), posBuckets.map(function (val, i) {
-      if (val === 0) return null;
-      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
-      var h = Math.max(4, val / maxVal * BAR_MAX_H);
-      return /*#__PURE__*/React.createElement("rect", {
-        key: "p" + i,
-        x: x,
-        y: MID_Y - h,
-        width: BAR_W,
-        height: h,
-        fill: "#F5A800",
-        opacity: "0.85",
-        rx: "2"
-      });
-    }), negBuckets.map(function (val, i) {
-      if (val === 0) return null;
-      var x = 16 + i * BUCKET_W + (BUCKET_W - BAR_W) / 2;
-      var h = Math.max(4, val / maxVal * BAR_MAX_H);
-      return /*#__PURE__*/React.createElement("rect", {
-        key: "n" + i,
-        x: x,
-        y: MID_Y,
-        width: BAR_W,
-        height: h,
-        fill: "#e03535",
-        opacity: "0.8",
-        rx: "2"
-      });
-    }), posBuckets.map(function (val, i) {
-      if (val === 0) return null;
-      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
-      var h = Math.max(4, val / maxVal * BAR_MAX_H);
-      return /*#__PURE__*/React.createElement("text", {
-        key: "pl" + i,
-        x: x,
-        y: MID_Y - h - 3,
-        textAnchor: "middle",
-        fontSize: "7",
-        fill: "#F5A800",
-        fontFamily: "monospace"
-      }, val);
-    }), negBuckets.map(function (val, i) {
-      if (val === 0) return null;
-      var x = 16 + i * BUCKET_W + BUCKET_W / 2;
-      var h = Math.max(4, val / maxVal * BAR_MAX_H);
-      return /*#__PURE__*/React.createElement("text", {
-        key: "nl" + i,
-        x: x,
-        y: MID_Y + h + 9,
-        textAnchor: "middle",
-        fontSize: "7",
-        fill: "#e03535",
-        fontFamily: "monospace"
-      }, val);
-    }), [0, 5, 10, 15, "HT", 25, 30, 35, 40].map(function (label, i) {
-      return /*#__PURE__*/React.createElement("text", {
-        key: "xl" + i,
-        x: 16 + i * BUCKET_W * (i < 4 ? 1 : 1),
-        y: "108",
-        textAnchor: "middle",
-        fontSize: "7",
-        fill: label === "HT" ? "#F5A800" : "#444",
-        fontFamily: "monospace",
-        opacity: label === "HT" ? 0.7 : 1
-      }, label);
-    }), /*#__PURE__*/React.createElement("text", {
-      x: "12",
-      y: MID_Y - BAR_MAX_H + 4,
-      textAnchor: "end",
-      fontSize: "7",
-      fill: "#444",
-      fontFamily: "monospace"
-    }, "+"), /*#__PURE__*/React.createElement("text", {
-      x: "12",
-      y: MID_Y + BAR_MAX_H - 2,
-      textAnchor: "end",
-      fontSize: "7",
-      fill: "#444",
-      fontFamily: "monospace"
-    }, "\u2212")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 12,
-        marginTop: 4,
-        marginBottom: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        fontSize: 9,
-        color: "#888"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 8,
-        height: 8,
-        backgroundColor: "#F5A800",
-        borderRadius: 2
-      }
-    }), "Positive"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        fontSize: 9,
-        color: "#888"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 8,
-        height: 8,
-        backgroundColor: "#e03535",
-        borderRadius: 2
-      }
-    }), "Negative")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        borderTop: "1px solid #2a2a2a",
-        paddingTop: 8,
-        display: "flex",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        backgroundColor: "#111",
-        borderRadius: 6,
-        padding: "6px 10px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 8,
-        color: "#555",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        marginBottom: 2
-      }
-    }, "Avg gap \xB7 1st Half"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 16,
-        fontWeight: 900,
-        color: "#F5A800",
-        fontFamily: "monospace"
-      }
-    }, h1Gap ? h1Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 9,
-        color: "#444"
-      }
-    }, h1Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        backgroundColor: "#111",
-        borderRadius: 6,
-        padding: "6px 10px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 8,
-        color: "#555",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        marginBottom: 2
-      }
-    }, "Avg gap \xB7 2nd Half"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 16,
-        fontWeight: 900,
-        color: "#F5A800",
-        fontFamily: "monospace"
-      }
-    }, h2Gap ? h2Gap + "m" : "—"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 9,
-        color: "#444"
-      }
-    }, h2Pos.length, " positive events")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        backgroundColor: "#111",
-        borderRadius: 6,
-        padding: "6px 10px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 8,
-        color: "#555",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        marginBottom: 2
-      }
-    }, "Net effort"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 16,
-        fontWeight: 900,
-        color: totalPos > totalNeg ? "#2a9a44" : totalPos < totalNeg ? "#e03535" : "#888",
-        fontFamily: "monospace"
-      }
-    }, totalPos > totalNeg ? "+" : "", totalPos - totalNeg), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 9,
-        color: "#444"
-      }
-    }, totalPos, "+ \xB7 ", totalNeg, "\u2212"))));
   }(), /*#__PURE__*/React.createElement(AccordionSection, {
     title: "Scoring Events".concat(scoreHistory.length > 0 ? " (" + scoreHistory.length + ")" : ""),
     subtitle: "All tries and conversions logged",
@@ -5789,7 +5810,7 @@ function Breakdown() {
     ground: "Allambie Oval"
   }, {
     name: "Balmain Wolves",
-    ground: "Leichhardt Oval"
+    ground: "Leichhardt 2"
   }, {
     name: "Blacktown Scorpions",
     ground: "Grantham Reserve"
@@ -6158,95 +6179,111 @@ function Breakdown() {
     setCustomLocation = _useState102[1];
   var _useState103 = useState(""),
     _useState104 = _slicedToArray(_useState103, 2),
-    locationWeather = _useState104[0],
-    setLocationWeather = _useState104[1];
-  var _useState105 = useState(""),
+    oppoSearch = _useState104[0],
+    setOppoSearch = _useState104[1];
+  var _useState105 = useState([]),
     _useState106 = _slicedToArray(_useState105, 2),
-    weather = _useState106[0],
-    setWeather = _useState106[1];
-  var _useState107 = useState(""),
+    oppoResults = _useState106[0],
+    setOppoResults = _useState106[1];
+  var _useState107 = useState(false),
     _useState108 = _slicedToArray(_useState107, 2),
-    gameTime = _useState108[0],
-    setGameTime = _useState108[1];
-  var _useState109 = useState(null),
+    showOppoResults = _useState108[0],
+    setShowOppoResults = _useState108[1];
+  var _useState109 = useState(false),
     _useState110 = _slicedToArray(_useState109, 2),
-    pendingTeam = _useState110[0],
-    setPendingTeam = _useState110[1];
+    locationCustomMode = _useState110[0],
+    setLocationCustomMode = _useState110[1];
   var _useState111 = useState(""),
     _useState112 = _slicedToArray(_useState111, 2),
-    scorerName = _useState112[0],
-    setScorerName = _useState112[1];
-  var _useState113 = useState(0),
+    locationWeather = _useState112[0],
+    setLocationWeather = _useState112[1];
+  var _useState113 = useState(""),
     _useState114 = _slicedToArray(_useState113, 2),
-    scoreOppo = _useState114[0],
-    setScoreOppo = _useState114[1];
-  var _useState115 = useState([]),
+    weather = _useState114[0],
+    setWeather = _useState114[1];
+  var _useState115 = useState(""),
     _useState116 = _slicedToArray(_useState115, 2),
-    scoreHistory = _useState116[0],
-    setScoreHistory = _useState116[1];
+    gameTime = _useState116[0],
+    setGameTime = _useState116[1];
   var _useState117 = useState(null),
     _useState118 = _slicedToArray(_useState117, 2),
-    awaitConv = _useState118[0],
-    setAwaitConv = _useState118[1];
+    pendingTeam = _useState118[0],
+    setPendingTeam = _useState118[1];
   var _useState119 = useState(""),
     _useState120 = _slicedToArray(_useState119, 2),
-    convName = _useState120[0],
-    setConvName = _useState120[1];
-  var _useState121 = useState(false),
+    scorerName = _useState120[0],
+    setScorerName = _useState120[1];
+  var _useState121 = useState(0),
     _useState122 = _slicedToArray(_useState121, 2),
-    halfRunning = _useState122[0],
-    setHalfRunning = _useState122[1];
-  // Interchange timers
-  var _useState123 = useState(false),
+    scoreOppo = _useState122[0],
+    setScoreOppo = _useState122[1];
+  var _useState123 = useState([]),
     _useState124 = _slicedToArray(_useState123, 2),
-    subTimer1Active = _useState124[0],
-    setSubTimer1Active = _useState124[1];
-  var _useState125 = useState(300),
+    scoreHistory = _useState124[0],
+    setScoreHistory = _useState124[1];
+  var _useState125 = useState(null),
     _useState126 = _slicedToArray(_useState125, 2),
-    subTimer1Time = _useState126[0],
-    setSubTimer1Time = _useState126[1];
+    awaitConv = _useState126[0],
+    setAwaitConv = _useState126[1];
   var _useState127 = useState(""),
     _useState128 = _slicedToArray(_useState127, 2),
-    subTimer1Label = _useState128[0],
-    setSubTimer1Label = _useState128[1];
+    convName = _useState128[0],
+    setConvName = _useState128[1];
   var _useState129 = useState(false),
     _useState130 = _slicedToArray(_useState129, 2),
-    subTimer2Active = _useState130[0],
-    setSubTimer2Active = _useState130[1];
-  var _useState131 = useState(300),
+    halfRunning = _useState130[0],
+    setHalfRunning = _useState130[1];
+  // Interchange timers
+  var _useState131 = useState(false),
     _useState132 = _slicedToArray(_useState131, 2),
-    subTimer2Time = _useState132[0],
-    setSubTimer2Time = _useState132[1];
-  var _useState133 = useState(""),
+    subTimer1Active = _useState132[0],
+    setSubTimer1Active = _useState132[1];
+  var _useState133 = useState(300),
     _useState134 = _slicedToArray(_useState133, 2),
-    subTimer2Label = _useState134[0],
-    setSubTimer2Label = _useState134[1];
-  var _useState135 = useState(false),
+    subTimer1Time = _useState134[0],
+    setSubTimer1Time = _useState134[1];
+  var _useState135 = useState(""),
     _useState136 = _slicedToArray(_useState135, 2),
-    subTimer3Active = _useState136[0],
-    setSubTimer3Active = _useState136[1];
-  var _useState137 = useState(300),
+    subTimer1Label = _useState136[0],
+    setSubTimer1Label = _useState136[1];
+  var _useState137 = useState(false),
     _useState138 = _slicedToArray(_useState137, 2),
-    subTimer3Time = _useState138[0],
-    setSubTimer3Time = _useState138[1];
-  var _useState139 = useState(""),
+    subTimer2Active = _useState138[0],
+    setSubTimer2Active = _useState138[1];
+  var _useState139 = useState(300),
     _useState140 = _slicedToArray(_useState139, 2),
-    subTimer3Label = _useState140[0],
-    setSubTimer3Label = _useState140[1];
-  var _useState141 = useState(false),
+    subTimer2Time = _useState140[0],
+    setSubTimer2Time = _useState140[1];
+  var _useState141 = useState(""),
     _useState142 = _slicedToArray(_useState141, 2),
-    subTimer4Active = _useState142[0],
-    setSubTimer4Active = _useState142[1];
-  var _useState143 = useState(300),
+    subTimer2Label = _useState142[0],
+    setSubTimer2Label = _useState142[1];
+  var _useState143 = useState(false),
     _useState144 = _slicedToArray(_useState143, 2),
-    subTimer4Time = _useState144[0],
-    setSubTimer4Time = _useState144[1];
-  var _useState145 = useState(""),
+    subTimer3Active = _useState144[0],
+    setSubTimer3Active = _useState144[1];
+  var _useState145 = useState(300),
     _useState146 = _slicedToArray(_useState145, 2),
-    subTimer4Label = _useState146[0],
-    setSubTimer4Label = _useState146[1];
+    subTimer3Time = _useState146[0],
+    setSubTimer3Time = _useState146[1];
+  var _useState147 = useState(""),
+    _useState148 = _slicedToArray(_useState147, 2),
+    subTimer3Label = _useState148[0],
+    setSubTimer3Label = _useState148[1];
+  var _useState149 = useState(false),
+    _useState150 = _slicedToArray(_useState149, 2),
+    subTimer4Active = _useState150[0],
+    setSubTimer4Active = _useState150[1];
+  var _useState151 = useState(300),
+    _useState152 = _slicedToArray(_useState151, 2),
+    subTimer4Time = _useState152[0],
+    setSubTimer4Time = _useState152[1];
+  var _useState153 = useState(""),
+    _useState154 = _slicedToArray(_useState153, 2),
+    subTimer4Label = _useState154[0],
+    setSubTimer4Label = _useState154[1];
   // Interchange tracker
-  var _useState147 = useState(Array.from({
+  var _useState155 = useState(Array.from({
       length: 17
     }, function (_, i) {
       return {
@@ -6257,13 +6294,13 @@ function Breakdown() {
         lastOn: i < 12 ? Date.now() : null
       };
     })),
-    _useState148 = _slicedToArray(_useState147, 2),
-    players = _useState148[0],
-    setPlayers = _useState148[1];
-  var _useState149 = useState(false),
-    _useState150 = _slicedToArray(_useState149, 2),
-    editingRoster = _useState150[0],
-    setEditingRoster = _useState150[1];
+    _useState156 = _slicedToArray(_useState155, 2),
+    players = _useState156[0],
+    setPlayers = _useState156[1];
+  var _useState157 = useState(false),
+    _useState158 = _slicedToArray(_useState157, 2),
+    editingRoster = _useState158[0],
+    setEditingRoster = _useState158[1];
   // Game notes
   // Persistent notes — survive tab switches and page reloads via sessionStorage
   var loadNote = function loadNote(key) {
@@ -6279,170 +6316,170 @@ function Breakdown() {
       sessionStorage.setItem("ww_" + key, val);
     } catch (_unused2) {}
   };
-  var _useState151 = useState(function () {
+  var _useState159 = useState(function () {
       return loadNote("positives");
     }),
-    _useState152 = _slicedToArray(_useState151, 2),
-    positives = _useState152[0],
-    _setPositives = _useState152[1];
+    _useState160 = _slicedToArray(_useState159, 2),
+    positives = _useState160[0],
+    _setPositives = _useState160[1];
   var setPositives = function setPositives(v) {
     _setPositives(v);
     saveNote("positives", v);
   };
-  var _useState153 = useState(function () {
+  var _useState161 = useState(function () {
       return loadNote("workOns");
     }),
-    _useState154 = _slicedToArray(_useState153, 2),
-    workOns = _useState154[0],
-    _setWorkOns = _useState154[1];
+    _useState162 = _slicedToArray(_useState161, 2),
+    workOns = _useState162[0],
+    _setWorkOns = _useState162[1];
   var setWorkOns = function setWorkOns(v) {
     _setWorkOns(v);
     saveNote("workOns", v);
   };
-  var _useState155 = useState(function () {
+  var _useState163 = useState(function () {
       return loadNote("opposition");
     }),
-    _useState156 = _slicedToArray(_useState155, 2),
-    opposition = _useState156[0],
-    _setOpposition = _useState156[1];
+    _useState164 = _slicedToArray(_useState163, 2),
+    opposition = _useState164[0],
+    _setOpposition = _useState164[1];
   var setOpposition = function setOpposition(v) {
     _setOpposition(v);
     saveNote("opposition", v);
   };
-  var _useState157 = useState(function () {
+  var _useState165 = useState(function () {
       return loadNote("gamePlan");
     }),
-    _useState158 = _slicedToArray(_useState157, 2),
-    gamePlan = _useState158[0],
-    _setGamePlan = _useState158[1];
+    _useState166 = _slicedToArray(_useState165, 2),
+    gamePlan = _useState166[0],
+    _setGamePlan = _useState166[1];
   var setGamePlan = function setGamePlan(v) {
     _setGamePlan(v);
     saveNote("gamePlan", v);
   };
-  var _useState159 = useState(function () {
+  var _useState167 = useState(function () {
       return loadNote("highlights");
     }),
-    _useState160 = _slicedToArray(_useState159, 2),
-    highlights = _useState160[0],
-    _setHighlights = _useState160[1];
+    _useState168 = _slicedToArray(_useState167, 2),
+    highlights = _useState168[0],
+    _setHighlights = _useState168[1];
   var setHighlights = function setHighlights(v) {
     _setHighlights(v);
     saveNote("highlights", v);
   };
-  var _useState161 = useState(function () {
+  var _useState169 = useState(function () {
       return loadNote("positives2");
     }),
-    _useState162 = _slicedToArray(_useState161, 2),
-    positives2 = _useState162[0],
-    _setPositives2 = _useState162[1];
+    _useState170 = _slicedToArray(_useState169, 2),
+    positives2 = _useState170[0],
+    _setPositives2 = _useState170[1];
   var setPositives2 = function setPositives2(v) {
     _setPositives2(v);
     saveNote("positives2", v);
   };
-  var _useState163 = useState(function () {
+  var _useState171 = useState(function () {
       return loadNote("workOns2");
     }),
-    _useState164 = _slicedToArray(_useState163, 2),
-    workOns2 = _useState164[0],
-    _setWorkOns2 = _useState164[1];
+    _useState172 = _slicedToArray(_useState171, 2),
+    workOns2 = _useState172[0],
+    _setWorkOns2 = _useState172[1];
   var setWorkOns2 = function setWorkOns2(v) {
     _setWorkOns2(v);
     saveNote("workOns2", v);
   };
-  var _useState165 = useState(function () {
+  var _useState173 = useState(function () {
       return loadNote("opposition2");
     }),
-    _useState166 = _slicedToArray(_useState165, 2),
-    opposition2 = _useState166[0],
-    _setOpposition2 = _useState166[1];
+    _useState174 = _slicedToArray(_useState173, 2),
+    opposition2 = _useState174[0],
+    _setOpposition2 = _useState174[1];
   var setOpposition2 = function setOpposition2(v) {
     _setOpposition2(v);
     saveNote("opposition2", v);
   };
-  var _useState167 = useState(function () {
+  var _useState175 = useState(function () {
       return loadNote("gamePlan2");
     }),
-    _useState168 = _slicedToArray(_useState167, 2),
-    gamePlan2 = _useState168[0],
-    _setGamePlan2 = _useState168[1];
+    _useState176 = _slicedToArray(_useState175, 2),
+    gamePlan2 = _useState176[0],
+    _setGamePlan2 = _useState176[1];
   var setGamePlan2 = function setGamePlan2(v) {
     _setGamePlan2(v);
     saveNote("gamePlan2", v);
   };
-  var _useState169 = useState(function () {
+  var _useState177 = useState(function () {
       return loadNote("highlights2");
     }),
-    _useState170 = _slicedToArray(_useState169, 2),
-    highlights2 = _useState170[0],
-    _setHighlights2 = _useState170[1];
+    _useState178 = _slicedToArray(_useState177, 2),
+    highlights2 = _useState178[0],
+    _setHighlights2 = _useState178[1];
   var setHighlights2 = function setHighlights2(v) {
     _setHighlights2(v);
     saveNote("highlights2", v);
   };
-  var _useState171 = useState(function () {
+  var _useState179 = useState(function () {
       return loadNote("motm");
     }),
-    _useState172 = _slicedToArray(_useState171, 2),
-    motm = _useState172[0],
-    _setMotm = _useState172[1];
+    _useState180 = _slicedToArray(_useState179, 2),
+    motm = _useState180[0],
+    _setMotm = _useState180[1];
   var setMotm = function setMotm(v) {
     _setMotm(v);
     saveNote("motm", v);
   };
-  var _useState173 = useState(function () {
+  var _useState181 = useState(function () {
       return loadNote("motmReason");
     }),
-    _useState174 = _slicedToArray(_useState173, 2),
-    motmReason = _useState174[0],
-    _setMotmReason = _useState174[1];
+    _useState182 = _slicedToArray(_useState181, 2),
+    motmReason = _useState182[0],
+    _setMotmReason = _useState182[1];
   var setMotmReason = function setMotmReason(v) {
     _setMotmReason(v);
     saveNote("motmReason", v);
   };
-  var _useState175 = useState("half"),
-    _useState176 = _slicedToArray(_useState175, 2),
-    notesTab = _useState176[0],
-    setNotesTab = _useState176[1];
-  var _useState177 = useState(function () {
+  var _useState183 = useState("half"),
+    _useState184 = _slicedToArray(_useState183, 2),
+    notesTab = _useState184[0],
+    setNotesTab = _useState184[1];
+  var _useState185 = useState(function () {
       return loadNote("matchSummary");
     }),
-    _useState178 = _slicedToArray(_useState177, 2),
-    matchSummary = _useState178[0],
-    _setMatchSummary = _useState178[1];
+    _useState186 = _slicedToArray(_useState185, 2),
+    matchSummary = _useState186[0],
+    _setMatchSummary = _useState186[1];
   var setMatchSummary = function setMatchSummary(v) {
     _setMatchSummary(v);
     saveNote("matchSummary", v);
   };
-  var _useState179 = useState(false),
-    _useState180 = _slicedToArray(_useState179, 2),
-    summaryLoading = _useState180[0],
-    setSummaryLoading = _useState180[1];
-  var _useState181 = useState(function () {
+  var _useState187 = useState(false),
+    _useState188 = _slicedToArray(_useState187, 2),
+    summaryLoading = _useState188[0],
+    setSummaryLoading = _useState188[1];
+  var _useState189 = useState(function () {
       return loadNote("coachesReport");
     }),
-    _useState182 = _slicedToArray(_useState181, 2),
-    coachesReport = _useState182[0],
-    _setCoachesReport = _useState182[1];
+    _useState190 = _slicedToArray(_useState189, 2),
+    coachesReport = _useState190[0],
+    _setCoachesReport = _useState190[1];
   var setCoachesReport = function setCoachesReport(v) {
     _setCoachesReport(v);
     saveNote("coachesReport", v);
   };
-  var _useState183 = useState(false),
-    _useState184 = _slicedToArray(_useState183, 2),
-    reportLoading = _useState184[0],
-    setReportLoading = _useState184[1];
+  var _useState191 = useState(false),
+    _useState192 = _slicedToArray(_useState191, 2),
+    reportLoading = _useState192[0],
+    setReportLoading = _useState192[1];
   // ── Auto-save game state to localStorage ─────────────────────────────────
   var LS_KEY = "breakdown_game_v1";
 
   // Check for saved game on load
-  var _useState185 = useState(false),
-    _useState186 = _slicedToArray(_useState185, 2),
-    showResume = _useState186[0],
-    setShowResume = _useState186[1];
-  var _useState187 = useState(null),
-    _useState188 = _slicedToArray(_useState187, 2),
-    resumeData = _useState188[0],
-    setResumeData = _useState188[1];
+  var _useState193 = useState(false),
+    _useState194 = _slicedToArray(_useState193, 2),
+    showResume = _useState194[0],
+    setShowResume = _useState194[1];
+  var _useState195 = useState(null),
+    _useState196 = _slicedToArray(_useState195, 2),
+    resumeData = _useState196[0],
+    setResumeData = _useState196[1];
   useEffect(function () {
     try {
       var saved = localStorage.getItem(LS_KEY);
@@ -6458,10 +6495,10 @@ function Breakdown() {
   }, []);
 
   // Visual save indicator
-  var _useState189 = useState(""),
-    _useState190 = _slicedToArray(_useState189, 2),
-    saveIndicator = _useState190[0],
-    setSaveIndicator = _useState190[1];
+  var _useState197 = useState(""),
+    _useState198 = _slicedToArray(_useState197, 2),
+    saveIndicator = _useState198[0],
+    setSaveIndicator = _useState198[1];
   var hasMounted = useRef(false);
   useEffect(function () {
     if (!hasMounted.current) {
@@ -6560,13 +6597,13 @@ function Breakdown() {
     setShowResume(false);
     setResumeData(null);
   };
-  var _useState191 = useState({
+  var _useState199 = useState({
       half: false,
       full: false
     }),
-    _useState192 = _slicedToArray(_useState191, 2),
-    talkingPointsLoading = _useState192[0],
-    setTalkingPointsLoading = _useState192[1];
+    _useState200 = _slicedToArray(_useState199, 2),
+    talkingPointsLoading = _useState200[0],
+    setTalkingPointsLoading = _useState200[1];
   var chatEndRef = useRef(null);
   var sinBinRef = useRef(null);
   var halfRef = useRef(null);
@@ -6815,7 +6852,7 @@ function Breakdown() {
     setScoreHistory(function (h) {
       return [].concat(_toConsumableArray(h), [{
         team: pendingTeam,
-        type: "Try",
+        type: "Try Scorer",
         pts: 5,
         scorer: scorerName,
         stamp: stamp
@@ -7393,24 +7430,24 @@ function Breakdown() {
       });
     });
   };
-  var _useState193 = useState(false),
-    _useState194 = _slicedToArray(_useState193, 2),
-    postGameLoading = _useState194[0],
-    setPostGameLoading = _useState194[1];
-  var _useState195 = useState(false),
-    _useState196 = _slicedToArray(_useState195, 2),
-    postGameMotmError = _useState196[0],
-    setPostGameMotmError = _useState196[1];
-  var _useState197 = useState(false),
-    _useState198 = _slicedToArray(_useState197, 2),
-    savedToLog = _useState198[0],
-    setSavedToLog = _useState198[1];
-  var _useState199 = useState(function () {
+  var _useState201 = useState(false),
+    _useState202 = _slicedToArray(_useState201, 2),
+    postGameLoading = _useState202[0],
+    setPostGameLoading = _useState202[1];
+  var _useState203 = useState(false),
+    _useState204 = _slicedToArray(_useState203, 2),
+    postGameMotmError = _useState204[0],
+    setPostGameMotmError = _useState204[1];
+  var _useState205 = useState(false),
+    _useState206 = _slicedToArray(_useState205, 2),
+    savedToLog = _useState206[0],
+    setSavedToLog = _useState206[1];
+  var _useState207 = useState(function () {
       return loadNote("socialPost");
     }),
-    _useState200 = _slicedToArray(_useState199, 2),
-    socialPost = _useState200[0],
-    setSocialPost = _useState200[1];
+    _useState208 = _slicedToArray(_useState207, 2),
+    socialPost = _useState208[0],
+    setSocialPost = _useState208[1];
   var setSocialPostPersist = function setSocialPostPersist(v) {
     setSocialPost(v);
     saveNote("socialPost", v);
@@ -7427,7 +7464,7 @@ function Breakdown() {
               return e.sanction === "Penalty" && e.won;
             }).length;
             triesW = scoreHistory.filter(function (e) {
-              return e.team === "bjru" && e.type === "Try";
+              return e.team === "bjru" && e.type === "Try Scorer";
             }).length;
             msgLines = ["Write a short upbeat Facebook post for a junior rugby club (Balmain Wolves U11) after their match.", "Tone: positive, community-focused, celebrating effort and teamwork. Around 80-100 words.", "DO NOT name any players or coaches. Refer only to the team as the Wolves or our players.", "Include the score, result, and a brief mention of effort.", "Reference weather and location if provided.", "Mention our Man of the Match without naming them.", "End with these hashtags: #BalmainWolves #U11 #JuniorRugby #SJRU #TheWayOfTheWolf", "", "Match details:", "Result: " + finalScore + " (" + result + ")", "Location: " + (locationWeather || "not recorded"), "Weather: " + (weather || "not recorded"), "Tries scored: " + triesW, "Penalties won: " + penWon, "MOTM: selected (do not name)"];
             prompt = msgLines.join(String.fromCharCode(10));
@@ -8228,6 +8265,10 @@ function Breakdown() {
       setGameTime("");
       setCustomOppo("");
       setCustomLocation("");
+      setOppoSearch("");
+      setOppoResults([]);
+      setShowOppoResults(false);
+      setLocationCustomMode(false);
       setUnavailablePlayers([]);
       setScrumContested("contested");
       try {
@@ -8401,7 +8442,7 @@ function Breakdown() {
       color: t.muted,
       marginTop: 2
     }
-  }, "Enter details before kick-off \u2014 all optional")), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     id: "setupScroll",
     style: {
       flex: 1,
@@ -8427,52 +8468,68 @@ function Breakdown() {
       textTransform: "uppercase",
       marginBottom: 4
     }
-  }, "Opposition"), /*#__PURE__*/React.createElement("select", {
-    value: oppoName === customOppo && customOppo ? "Other" : oppoName,
-    onChange: function onChange(e) {
-      if (e.target.value === "Other") {
-        setOppoName(customOppo || "");
-        setLocationWeather("");
-      } else {
-        var club = CLUBS.find(function (c) {
-          return c.name === e.target.value;
-        });
-        setOppoName(e.target.value);
-        setCustomOppo("");
-        if (club && club.ground !== "TBA") setLocationWeather(club.ground);else setLocationWeather("");
-      }
-    },
+  }, "Opposition"), oppoName && CLUBS.find(function (c) {
+    return c.name === oppoName;
+  }) ? /*#__PURE__*/React.createElement("div", {
     style: {
-      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
       backgroundColor: t.surface,
       border: "1px solid ".concat(t.border),
       borderRadius: 8,
       padding: "10px 12px",
-      color: oppoName ? t.text : t.muted,
-      fontSize: 14,
-      boxSizing: "border-box",
-      fontFamily: "'Inter', sans-serif",
-      outline: "none",
-      marginBottom: 8
+      marginBottom: 12
     }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "\u2014 Select opposition \u2014"), CLUBS.map(function (c) {
-    return /*#__PURE__*/React.createElement("option", {
-      key: c.name,
-      value: c.name
-    }, c.name);
-  }), /*#__PURE__*/React.createElement("option", {
-    value: "Other"
-  }, "Other\u2026")), (!oppoName || !CLUBS.find(function (c) {
-    return c.name === oppoName;
-  })) && /*#__PURE__*/React.createElement("input", {
-    value: customOppo,
-    onChange: function onChange(e) {
-      setCustomOppo(e.target.value);
-      setOppoName(e.target.value);
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      color: t.text
+    }
+  }, oppoName), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      setOppoName("");
+      setOppoSearch("");
+      setLocationWeather("");
+      setLocationCustomMode(false);
     },
-    placeholder: "Enter opposition name\u2026",
+    style: {
+      fontSize: 11,
+      color: t.gold,
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      fontFamily: "'Inter', sans-serif"
+    }
+  }, "change")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "relative",
+      marginBottom: showOppoResults ? 0 : 12
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: oppoSearch,
+    onChange: function onChange(e) {
+      var val = e.target.value;
+      setOppoSearch(val);
+      setOppoName(val);
+      if (val.length > 0) {
+        var matches = CLUBS.filter(function (c) {
+          return c.name.toLowerCase().includes(val.toLowerCase());
+        }).slice(0, 6);
+        setOppoResults(matches);
+        setShowOppoResults(true);
+      } else {
+        setOppoResults([]);
+        setShowOppoResults(false);
+        setLocationWeather("");
+      }
+    },
+    onBlur: function onBlur() {
+      return setTimeout(function () {
+        return setShowOppoResults(false);
+      }, 150);
+    },
+    placeholder: "Type to search clubs\u2026",
     style: {
       width: "100%",
       backgroundColor: t.surface,
@@ -8483,16 +8540,77 @@ function Breakdown() {
       fontSize: 14,
       boxSizing: "border-box",
       fontFamily: "'Inter', sans-serif",
-      outline: "none",
+      outline: "none"
+    }
+  }), oppoSearch.length > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      setOppoSearch("");
+      setOppoName("");
+      setOppoResults([]);
+      setShowOppoResults(false);
+      setLocationWeather("");
+    },
+    style: {
+      position: "absolute",
+      right: 10,
+      top: "50%",
+      transform: "translateY(-50%)",
+      background: "none",
+      border: "none",
+      color: t.muted,
+      fontSize: 18,
+      cursor: "pointer",
+      lineHeight: 1
+    }
+  }, "\xD7"), showOppoResults && oppoResults.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      backgroundColor: t.surface,
+      border: "1px solid ".concat(t.gold),
+      borderTop: "none",
+      borderRadius: "0 0 8px 8px",
+      overflow: "hidden",
       marginBottom: 12
     }
-  }), oppoName && CLUBS.find(function (c) {
-    return c.name === oppoName;
+  }, oppoResults.map(function (c) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.name,
+      onMouseDown: function onMouseDown() {
+        setOppoName(c.name);
+        setOppoSearch(c.name);
+        setShowOppoResults(false);
+        if (c.ground && c.ground !== "TBA") {
+          setLocationWeather(c.ground);
+          setLocationCustomMode(false);
+        } else setLocationWeather("");
+      },
+      style: {
+        padding: "10px 12px",
+        fontSize: 13,
+        color: t.text,
+        cursor: "pointer",
+        borderBottom: "1px solid ".concat(t.border),
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", null, c.name), c.ground !== "TBA" && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: t.muted
+      }
+    }, c.ground));
+  }), oppoSearch && !CLUBS.find(function (c) {
+    return c.name.toLowerCase() === oppoSearch.toLowerCase();
   }) && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 12
+      padding: "12px 12px 10px",
+      marginTop: 4,
+      borderTop: "1px solid ".concat(t.border),
+      fontSize: 11,
+      color: t.muted,
+      fontStyle: "italic"
     }
-  }), /*#__PURE__*/React.createElement("div", {
+  }, "\"", oppoSearch, "\" will be used as entered"))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: t.muted,
@@ -8500,14 +8618,66 @@ function Breakdown() {
       textTransform: "uppercase",
       marginBottom: 4
     }
-  }, "Location"), /*#__PURE__*/React.createElement("select", {
-    value: locationWeather === customLocation && customLocation ? "Other" : locationWeather,
+  }, "Location", locationWeather && oppoName && CLUBS.find(function (c) {
+    return c.name === oppoName;
+  }) && CLUBS.find(function (c) {
+    return c.name === oppoName;
+  }).ground === locationWeather && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      color: t.gold,
+      backgroundColor: t.gold + "18",
+      border: "1px solid ".concat(t.gold, "33"),
+      borderRadius: 4,
+      padding: "1px 5px",
+      marginLeft: 6,
+      fontWeight: 400,
+      textTransform: "none",
+      letterSpacing: 0
+    }
+  }, "auto-filled")), locationCustomMode ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+    value: locationWeather,
     onChange: function onChange(e) {
-      if (e.target.value === "Other") {
-        setLocationWeather(customLocation || "");
+      return setLocationWeather(e.target.value);
+    },
+    placeholder: "Enter ground name\u2026",
+    autoFocus: true,
+    style: {
+      width: "100%",
+      backgroundColor: t.surface,
+      border: "1px solid ".concat(t.gold),
+      borderRadius: 8,
+      padding: "10px 12px",
+      color: t.text,
+      fontSize: 14,
+      boxSizing: "border-box",
+      fontFamily: "'Inter', sans-serif",
+      outline: "none",
+      marginBottom: 4
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      setLocationCustomMode(false);
+      if (!locationWeather) setLocationWeather("");
+    },
+    style: {
+      fontSize: 11,
+      color: t.muted,
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      fontFamily: "'Inter', sans-serif",
+      marginBottom: 10
+    }
+  }, "\u2190 back to list")) : /*#__PURE__*/React.createElement("select", {
+    value: locationWeather,
+    onChange: function onChange(e) {
+      if (e.target.value === "__other__") {
+        setLocationCustomMode(true);
+        setLocationWeather("");
       } else {
         setLocationWeather(e.target.value);
-        setCustomLocation("");
+        setLocationCustomMode(false);
       }
     },
     style: {
@@ -8521,42 +8691,24 @@ function Breakdown() {
       boxSizing: "border-box",
       fontFamily: "'Inter', sans-serif",
       outline: "none",
-      marginBottom: 8
+      marginBottom: 10
     }
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "\u2014 Select ground \u2014"), GROUNDS.map(function (g) {
+  }, "\u2014 Select ground \u2014"), /*#__PURE__*/React.createElement("option", {
+    value: "Leichhardt 2"
+  }, "\u2605 Leichhardt 2 (home)"), /*#__PURE__*/React.createElement("option", {
+    disabled: true
+  }, "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"), GROUNDS.filter(function (g) {
+    return g !== "Leichhardt 2";
+  }).map(function (g) {
     return /*#__PURE__*/React.createElement("option", {
       key: g,
       value: g
     }, g);
   }), /*#__PURE__*/React.createElement("option", {
-    value: "Other"
-  }, "Other\u2026")), (!locationWeather || !GROUNDS.includes(locationWeather)) && /*#__PURE__*/React.createElement("input", {
-    value: customLocation,
-    onChange: function onChange(e) {
-      setCustomLocation(e.target.value);
-      setLocationWeather(e.target.value);
-    },
-    placeholder: "Enter ground name\u2026",
-    style: {
-      width: "100%",
-      backgroundColor: t.surface,
-      border: "1px solid ".concat(t.border),
-      borderRadius: 8,
-      padding: "10px 12px",
-      color: t.text,
-      fontSize: 14,
-      boxSizing: "border-box",
-      fontFamily: "'Inter', sans-serif",
-      outline: "none",
-      marginBottom: 10
-    }
-  }), locationWeather && GROUNDS.includes(locationWeather) && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 10
-    }
-  }), /*#__PURE__*/React.createElement("div", {
+    value: "__other__"
+  }, "Other\u2026")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: t.muted,
@@ -8695,7 +8847,7 @@ function Breakdown() {
         border: "1px solid ".concat(isUnavail ? t.danger : t.border),
         borderRadius: 8,
         color: isUnavail ? t.danger : t.muted,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: isUnavail ? 700 : 400,
         cursor: "pointer",
         fontFamily: "'Inter', sans-serif"
@@ -8714,7 +8866,7 @@ function Breakdown() {
       color: t.text,
       marginBottom: 14
     }
-  }, "Captain & Starting Subs"), /*#__PURE__*/React.createElement("div", {
+  }, "Captain"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: t.muted,
@@ -8756,18 +8908,24 @@ function Breakdown() {
     }, p);
   })), /*#__PURE__*/React.createElement("div", {
     style: {
+      height: 1,
+      backgroundColor: t.border,
+      margin: "16px 0"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: t.text,
+      marginBottom: 10
+    }
+  }, "Starting Subs"), /*#__PURE__*/React.createElement("div", {
+    style: {
       fontSize: 10,
       color: t.muted,
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
-      marginBottom: 6
+      marginBottom: 8
     }
-  }, "Starting Subs ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 400,
-      textTransform: "none"
-    }
-  }, "\u2014 tap to select up to 4")), /*#__PURE__*/React.createElement("div", {
+  }, "Tap to select up to 4"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -9091,10 +9249,6 @@ function Breakdown() {
       overflowY: "auto",
       padding: "4px 18px 12px",
       position: "relative"
-    },
-    onScroll: function onScroll(e) {
-      var el = e.target;
-      document.getElementById("helpChevron").style.opacity = el.scrollHeight - el.scrollTop <= el.clientHeight + 10 ? "0" : "1";
     }
   }, [{
     icons: ["M12 5v14", "M5 12h14"],
@@ -9167,36 +9321,6 @@ function Breakdown() {
       }
     }, step.body)));
   })), /*#__PURE__*/React.createElement("div", {
-    id: "helpChevron",
-    style: {
-      position: "absolute",
-      bottom: 62,
-      left: 0,
-      right: 0,
-      height: 48,
-      background: "linear-gradient(to bottom, transparent, ".concat(t.card, ")"),
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "center",
-      paddingBottom: 6,
-      pointerEvents: "none",
-      transition: "opacity 0.3s"
-    }
-  }, /*#__PURE__*/React.createElement("svg", {
-    width: 20,
-    height: 20,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: t.muted,
-    strokeWidth: 2,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    style: {
-      opacity: 0.5
-    }
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M6 9l6 6 6-6"
-  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "10px 18px 14px",
       borderTop: "1px solid ".concat(t.border),
@@ -9226,10 +9350,10 @@ function Breakdown() {
 function ChecklistItem(_ref50) {
   var item = _ref50.item,
     darkMode = _ref50.darkMode;
-  var _useState201 = useState(false),
-    _useState202 = _slicedToArray(_useState201, 2),
-    checked = _useState202[0],
-    setChecked = _useState202[1];
+  var _useState209 = useState(false),
+    _useState210 = _slicedToArray(_useState209, 2),
+    checked = _useState210[0],
+    setChecked = _useState210[1];
   var gold = darkMode ? "#F5A800" : "#c48400";
   var border = darkMode ? "#2a2a2a" : "#e0e0d8";
   var text = darkMode ? "#f0f0f0" : "#111111";
@@ -9287,10 +9411,10 @@ function AccordionSection(_ref51) {
     _ref51$defaultOpen = _ref51.defaultOpen,
     defaultOpen = _ref51$defaultOpen === void 0 ? false : _ref51$defaultOpen,
     children = _ref51.children;
-  var _useState203 = useState(defaultOpen),
-    _useState204 = _slicedToArray(_useState203, 2),
-    open = _useState204[0],
-    setOpen = _useState204[1];
+  var _useState211 = useState(defaultOpen),
+    _useState212 = _slicedToArray(_useState211, 2),
+    open = _useState212[0],
+    setOpen = _useState212[1];
   var t = darkMode ? {
     card: "#222222",
     border: "#303030",
