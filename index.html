@@ -3395,6 +3395,329 @@ function MatchPage(_ref15) {
       marginTop: 20,
       marginBottom: 6
     }
+  }, "Match Metrics"), function () {
+    var NL = String.fromCharCode(10);
+
+    // ── Conversion rate ───────────────────────────────────────────────
+    var triesW = scoreHistory.filter(function (e) {
+      return e.team === "bjru" && e.type === "Try";
+    }).length;
+    var convsW = scoreHistory.filter(function (e) {
+      return e.team === "bjru" && e.type === "Conv";
+    }).length;
+    var convRate = triesW > 0 ? Math.round(convsW / triesW * 100) : null;
+
+    // ── Time in lead ──────────────────────────────────────────────────
+    // Walk score history and accumulate minutes where Wolves were ahead
+    var wolves = 0,
+      oppo = 0,
+      timeInLead = 0,
+      timeBehind = 0,
+      timeDraw = 0;
+    var prevMin = 0;
+    var sorted = _toConsumableArray(scoreHistory).filter(function (e) {
+      return e.stamp;
+    }).sort(function (a, b) {
+      return parseInt(a.stamp) - parseInt(b.stamp);
+    });
+    sorted.forEach(function (e) {
+      var min = parseInt(e.stamp) || 0;
+      var elapsed = min - prevMin;
+      if (wolves > oppo) timeInLead += elapsed;else if (oppo > wolves) timeBehind += elapsed;else timeDraw += elapsed;
+      if (e.team === "bjru") wolves += e.pts;else oppo += e.pts;
+      prevMin = min;
+    });
+    // Add time from last score to current match time
+    var currentMin = (halfHalf === 2 ? 20 : 0) + Math.floor((halfTimer || 0) / 60);
+    var remaining = currentMin - prevMin;
+    if (wolves > oppo) timeInLead += remaining;else if (oppo > wolves) timeBehind += remaining;else timeDraw += remaining;
+    var totalMins = timeInLead + timeBehind + timeDraw;
+    var leadPct = totalMins > 0 ? Math.round(timeInLead / totalMins * 100) : 0;
+
+    // ── Points per 5 minutes ──────────────────────────────────────────
+    var BUCKETS = 8;
+    var WINDOW = 5;
+    var ptsBuckets = Array(BUCKETS).fill(0);
+    scoreHistory.filter(function (e) {
+      return e.team === "bjru" && e.stamp && e.pts > 0;
+    }).forEach(function (e) {
+      var min = Math.min(parseInt(e.stamp) || 0, 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) ptsBuckets[bucket] += e.pts;
+    });
+
+    // ── Error rate per 5 minutes ──────────────────────────────────────
+    var errors = otherEvents.filter(function (e) {
+      return e.won === false;
+    });
+    var errBuckets = Array(BUCKETS).fill(0);
+    errors.forEach(function (e) {
+      if (!e.stamp) return;
+      var min = Math.min(parseInt(e.stamp) || 0, 39);
+      var bucket = Math.floor(min / WINDOW);
+      if (bucket >= 0 && bucket < BUCKETS) errBuckets[bucket]++;
+    });
+    var totalErrors = errors.length;
+    var totalMinsPlayed = Math.max(1, currentMin);
+    var errPer5 = totalMinsPlayed > 0 ? (totalErrors / totalMinsPlayed * 5).toFixed(1) : "0.0";
+    var maxPts = Math.max.apply(Math, [1].concat(_toConsumableArray(ptsBuckets)));
+    var maxErr = Math.max.apply(Math, [1].concat(_toConsumableArray(errBuckets)));
+    var BAR_MAX = 32;
+    var CHART_W = 280;
+    var BW = CHART_W / BUCKETS;
+    var BAR_W = BW * 0.5;
+    var MetricRow = function MetricRow(_ref16) {
+      var label = _ref16.label,
+        wolves = _ref16.wolves,
+        mid = _ref16.mid,
+        opp = _ref16.opp;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          borderBottom: "1px solid ".concat(t.border),
+          padding: "8px 12px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 56,
+          fontSize: 15,
+          fontWeight: 900,
+          color: t.gold,
+          fontFamily: "monospace",
+          textAlign: "left"
+        }
+      }, wolves), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          textAlign: "center",
+          fontSize: 10,
+          color: t.muted
+        }
+      }, label), /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 56,
+          fontSize: 15,
+          fontWeight: 900,
+          color: t.text,
+          fontFamily: "monospace",
+          textAlign: "right"
+        }
+      }, opp));
+    };
+    var ChartLabel = function ChartLabel(_ref17) {
+      var label = _ref17.label,
+        color = _ref17.color;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          fontSize: 9,
+          color: "#888"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 8,
+          height: 8,
+          backgroundColor: color,
+          borderRadius: 2
+        }
+      }), label);
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        backgroundColor: t.card,
+        border: "1px solid ".concat(t.border),
+        borderRadius: 8,
+        overflow: "hidden",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "6px 12px",
+        backgroundColor: t.surface,
+        borderBottom: "1px solid ".concat(t.border)
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        fontWeight: 700,
+        color: t.gold,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase"
+      }
+    }, "Key Metrics")), /*#__PURE__*/React.createElement(MetricRow, {
+      label: "Conversion Rate",
+      wolves: convRate !== null ? convRate + "%" : "—",
+      opp: convsW + "/" + triesW
+    }), /*#__PURE__*/React.createElement(MetricRow, {
+      label: "Mins in Lead",
+      wolves: timeInLead + "m",
+      opp: leadPct + "%"
+    }), /*#__PURE__*/React.createElement(MetricRow, {
+      label: "Avg Errors / 5min",
+      wolves: errPer5,
+      opp: totalErrors + " total"
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "6px 12px",
+        backgroundColor: t.surface,
+        borderBottom: "1px solid ".concat(t.border)
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        fontWeight: 700,
+        color: t.gold,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase"
+      }
+    }, "Points per 5 Minutes")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "10px 10px 4px"
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      viewBox: "0 0 " + (CHART_W + 20) + " 70",
+      style: {
+        display: "block",
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "16",
+      y1: "42",
+      x2: CHART_W + 16,
+      y2: "42",
+      stroke: "#2a2a2a",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: 16 + CHART_W / 2,
+      y1: "0",
+      x2: 16 + CHART_W / 2,
+      y2: "65",
+      stroke: "#F5A800",
+      strokeWidth: "1",
+      strokeDasharray: "3,3",
+      opacity: "0.4"
+    }), ptsBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BW + (BW - BAR_W) / 2;
+      var h = Math.max(4, val / maxPts * BAR_MAX);
+      return [/*#__PURE__*/React.createElement("rect", {
+        key: "b" + i,
+        x: x,
+        y: 42 - h,
+        width: BAR_W,
+        height: h,
+        fill: "#2a9a44",
+        opacity: "0.85",
+        rx: "2"
+      }), /*#__PURE__*/React.createElement("text", {
+        key: "l" + i,
+        x: x + BAR_W / 2,
+        y: 42 - h - 3,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#2a9a44",
+        fontFamily: "monospace"
+      }, val)];
+    }), [0, 5, 10, 15, 20, 25, 30, 35, 40].map(function (label, i) {
+      return /*#__PURE__*/React.createElement("text", {
+        key: i,
+        x: 16 + i * BW,
+        y: "65",
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: label === 20 ? "#F5A800" : "#444",
+        fontFamily: "monospace",
+        opacity: label === 20 ? 0.7 : 1
+      }, label === 20 ? "HT" : label);
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "6px 12px",
+        backgroundColor: t.surface,
+        borderBottom: "1px solid ".concat(t.border)
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 9,
+        fontWeight: 700,
+        color: t.gold,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase"
+      }
+    }, "Errors per 5 Minutes")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "10px 10px 8px"
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "100%",
+      viewBox: "0 0 " + (CHART_W + 20) + " 70",
+      style: {
+        display: "block",
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: "16",
+      y1: "42",
+      x2: CHART_W + 16,
+      y2: "42",
+      stroke: "#2a2a2a",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("line", {
+      x1: 16 + CHART_W / 2,
+      y1: "0",
+      x2: 16 + CHART_W / 2,
+      y2: "65",
+      stroke: "#F5A800",
+      strokeWidth: "1",
+      strokeDasharray: "3,3",
+      opacity: "0.4"
+    }), errBuckets.map(function (val, i) {
+      if (val === 0) return null;
+      var x = 16 + i * BW + (BW - BAR_W) / 2;
+      var h = Math.max(4, val / maxErr * BAR_MAX);
+      return [/*#__PURE__*/React.createElement("rect", {
+        key: "b" + i,
+        x: x,
+        y: 42 - h,
+        width: BAR_W,
+        height: h,
+        fill: "#e03535",
+        opacity: "0.8",
+        rx: "2"
+      }), /*#__PURE__*/React.createElement("text", {
+        key: "l" + i,
+        x: x + BAR_W / 2,
+        y: 42 - h - 3,
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: "#e03535",
+        fontFamily: "monospace"
+      }, val)];
+    }), [0, 5, 10, 15, 20, 25, 30, 35, 40].map(function (label, i) {
+      return /*#__PURE__*/React.createElement("text", {
+        key: i,
+        x: 16 + i * BW,
+        y: "65",
+        textAnchor: "middle",
+        fontSize: "7",
+        fill: label === 20 ? "#F5A800" : "#444",
+        fontFamily: "monospace",
+        opacity: label === 20 ? 0.7 : 1
+      }, label === 20 ? "HT" : label);
+    }))));
+  }(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: t.gold,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+      marginTop: 20,
+      marginBottom: 6
+    }
   }, "Discipline & Turnovers"), function () {
     var hh = function hh(pred, half) {
       return otherEvents.filter(function (e) {
@@ -3480,8 +3803,8 @@ function MatchPage(_ref15) {
     var twTot = allWon.length + spTurnW.tot;
     var tlTot = allLost.length + spTurnL.tot;
     var FS = 13;
-    var SH = function SH(_ref16) {
-      var label = _ref16.label;
+    var SH = function SH(_ref18) {
+      var label = _ref18.label;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "4px 8px",
@@ -3577,11 +3900,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref17) {
-      var lLabel = _ref17.lLabel,
-        lW = _ref17.lW,
-        rLabel = _ref17.rLabel,
-        rL = _ref17.rL;
+    var Row = function Row(_ref19) {
+      var lLabel = _ref19.lLabel,
+        lW = _ref19.lW,
+        rLabel = _ref19.rLabel,
+        rL = _ref19.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -3923,11 +4246,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref18) {
-      var lLabel = _ref18.lLabel,
-        lW = _ref18.lW,
-        rLabel = _ref18.rLabel,
-        rL = _ref18.rL;
+    var Row = function Row(_ref20) {
+      var lLabel = _ref20.lLabel,
+        lW = _ref20.lW,
+        rLabel = _ref20.rLabel,
+        rL = _ref20.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -4128,8 +4451,8 @@ function MatchPage(_ref15) {
       return e.sanction === "Free Kick" && !e.won;
     });
     var FS = 13;
-    var SH = function SH(_ref19) {
-      var label = _ref19.label;
+    var SH = function SH(_ref21) {
+      var label = _ref21.label;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "4px 8px",
@@ -4225,11 +4548,11 @@ function MatchPage(_ref15) {
         }
       }, "H2")));
     };
-    var Row = function Row(_ref20) {
-      var lLabel = _ref20.lLabel,
-        lW = _ref20.lW,
-        rLabel = _ref20.rLabel,
-        rL = _ref20.rL;
+    var Row = function Row(_ref22) {
+      var lLabel = _ref22.lLabel,
+        lW = _ref22.lW,
+        rLabel = _ref22.rLabel,
+        rL = _ref22.rL;
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -4644,12 +4967,12 @@ function MatchPage(_ref15) {
 
     // Render symbols
     var symbols = [];
-    Object.entries(byMinute).forEach(function (_ref21) {
-      var _ref22 = _slicedToArray(_ref21, 2),
-        min = _ref22[0],
-        _ref22$ = _ref22[1],
-        won = _ref22$.won,
-        lost = _ref22$.lost;
+    Object.entries(byMinute).forEach(function (_ref23) {
+      var _ref24 = _slicedToArray(_ref23, 2),
+        min = _ref24[0],
+        _ref24$ = _ref24[1],
+        won = _ref24$.won,
+        lost = _ref24$.lost;
       var x = xScale(parseInt(min));
       // Won events stack ABOVE midY
       won.forEach(function (e, i) {
@@ -4778,11 +5101,11 @@ function MatchPage(_ref15) {
         marginTop: 4,
         flexWrap: "wrap"
       }
-    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref23) {
-      var _ref24 = _slicedToArray(_ref23, 3),
-        sym = _ref24[0],
-        col = _ref24[1],
-        label = _ref24[2];
+    }, [["▲", "#2a9a44", "Pen Won"], ["▼", "#e03535", "Pen Lost"], ["●", "#2a9a44", "FK Won"], ["●", "#e03535", "FK Lost"]].map(function (_ref25) {
+      var _ref26 = _slicedToArray(_ref25, 3),
+        sym = _ref26[0],
+        col = _ref26[1],
+        label = _ref26[2];
       return /*#__PURE__*/React.createElement("div", {
         key: label,
         style: {
@@ -5271,8 +5594,8 @@ function MatchPage(_ref15) {
     }, e.stamp));
   })));
 }
-function ConcussionPage(_ref25) {
-  var ctx = _ref25.ctx;
+function ConcussionPage(_ref27) {
+  var ctx = _ref27.ctx;
   var t = ctx.t,
     darkMode = ctx.darkMode,
     expandedStep = ctx.expandedStep,
@@ -5461,6 +5784,206 @@ function Breakdown() {
     _useState30 = _slicedToArray(_useState29, 2),
     startingSubs = _useState30[0],
     setStartingSubs = _useState30[1];
+  var CLUBS = [{
+    name: "Allambie Jets",
+    ground: "Allambie Oval"
+  }, {
+    name: "Balmain Wolves",
+    ground: "Leichhardt Oval"
+  }, {
+    name: "Blacktown Scorpions",
+    ground: "Grantham Reserve"
+  }, {
+    name: "Blue Mountains Blue Tongues",
+    ground: "Lapstone Oval"
+  }, {
+    name: "Bondi Breakers",
+    ground: "Woollahra Oval 1"
+  }, {
+    name: "Box Hill Boxers",
+    ground: "TBA"
+  }, {
+    name: "Briars",
+    ground: "Rothwell Park"
+  }, {
+    name: "Burraneer",
+    ground: "John Dwyer Oval"
+  }, {
+    name: "Canterbury",
+    ground: "Wills Ground"
+  }, {
+    name: "Central Eastwood",
+    ground: "Marsfield Park"
+  }, {
+    name: "Chatswood",
+    ground: "Beauchamp Park"
+  }, {
+    name: "Clovelly Eagles",
+    ground: "Burrows Park"
+  }, {
+    name: "Collaroy Cougars",
+    ground: "Griffith Park"
+  }, {
+    name: "Coogee Seahorses",
+    ground: "Coogee Oval"
+  }, {
+    name: "Dee Why Lions",
+    ground: "James Morgan Reserve"
+  }, {
+    name: "Drummoyne Dirty Reds",
+    ground: "Taplin Park"
+  }, {
+    name: "Dundas Valley",
+    ground: "Cox Park"
+  }, {
+    name: "Dural",
+    ground: "Dural Park"
+  }, {
+    name: "East Bays",
+    ground: "Woollahra Oval 1"
+  }, {
+    name: "East Junior Beasties",
+    ground: "Woollahra Oval 1"
+  }, {
+    name: "East Wallaroos",
+    ground: "Woollahra Oval 1"
+  }, {
+    name: "Engadine Lions",
+    ground: "Anzac Oval"
+  }, {
+    name: "Forest",
+    ground: "War Memorial Playing Fields"
+  }, {
+    name: "Harbord Harlequins",
+    ground: "Reub Hudson Oval"
+  }, {
+    name: "Hawkesbury Valley",
+    ground: "Deerubbin Park"
+  }, {
+    name: "Hills",
+    ground: "Yattenden Oval"
+  }, {
+    name: "Hornsby",
+    ground: "Mark Taylor Oval"
+  }, {
+    name: "Hunters Hill",
+    ground: "Boronia Park"
+  }, {
+    name: "Killara-West Pymble",
+    ground: "Lofberg Oval"
+  }, {
+    name: "Lane Cove",
+    ground: "Tantallon Oval"
+  }, {
+    name: "Lindfield",
+    ground: "Tryon Oval"
+  }, {
+    name: "Liverpool City Cougars",
+    ground: "Dwyer Oval, Warwick Farm"
+  }, {
+    name: "Luddenham Lions",
+    ground: "TBA"
+  }, {
+    name: "Manly Roos",
+    ground: "Keirle Park"
+  }, {
+    name: "Manly Savers",
+    ground: "Keirle Park"
+  }, {
+    name: "Maroubra Missiles",
+    ground: "Nagle Park"
+  }, {
+    name: "Menai",
+    ground: "The Ridge Sporting Complex"
+  }, {
+    name: "Merrylands",
+    ground: "Holroyd Sportsground"
+  }, {
+    name: "Mosman Whales",
+    ground: "Rawson Park & Balmoral Park"
+  }, {
+    name: "Narrabeen",
+    ground: "North Narrabeen Reserve"
+  }, {
+    name: "Newport Breakers",
+    ground: "Porters Reserve"
+  }, {
+    name: "Northern Barbarians",
+    ground: "Pennant Hills Park No 1"
+  }, {
+    name: "North Rocks",
+    ground: "Kingsdene Oval / Peggy Womersley Reserve"
+  }, {
+    name: "Norths Pirates",
+    ground: "Tunks Park"
+  }, {
+    name: "Norwest Bulls",
+    ground: "Alwyn Lindfield Reserve Oval"
+  }, {
+    name: "Oatley",
+    ground: "Riverwood Park"
+  }, {
+    name: "Penrith RSL",
+    ground: "Nepean Rugby Park"
+  }, {
+    name: "Petersham",
+    ground: "Camperdown Park"
+  }, {
+    name: "Pittwater",
+    ground: "Pittwater High School"
+  }, {
+    name: "Randwick Warriors",
+    ground: "Nagle Park"
+  }, {
+    name: "Redfield",
+    ground: "Redfield College"
+  }, {
+    name: "Rockdale",
+    ground: "CA Redmond Field"
+  }, {
+    name: "Roseville",
+    ground: "Roseville Chase Oval"
+  }, {
+    name: "Ryde",
+    ground: "Ryde Park"
+  }, {
+    name: "Seaforth-Balgowlah Raiders",
+    ground: "Bantry Bay Oval"
+  }, {
+    name: "South Coogee Red Devils",
+    ground: "Nagle Park"
+  }, {
+    name: "St Ives",
+    ground: "Hassell Park"
+  }, {
+    name: "St Pats",
+    ground: "Hudson Park"
+  }, {
+    name: "Sylvania",
+    ground: "AR Hurst Reserve"
+  }, {
+    name: "Terrey Hills",
+    ground: "Terrey Hills Oval"
+  }, {
+    name: "Wahroonga Tigers",
+    ground: "Cliff Oval"
+  }, {
+    name: "Wakehurst",
+    ground: "Wakehurst Rugby Park"
+  }, {
+    name: "Western Raptors",
+    ground: "Mittigar Reserve"
+  }, {
+    name: "Wests",
+    ground: "Concord Oval"
+  }];
+
+  // All unique grounds for location dropdown
+  var GROUNDS = _toConsumableArray(new Set(CLUBS.map(function (c) {
+    return c.ground;
+  }).filter(function (g) {
+    return g !== "TBA";
+  }))).sort();
   var PLAYERS = ["Jude", "Arki", "Will", "Felix", "Harry", "Fergus", "Jack", "Flynn", "Billy", "Ben", "Alek", "George", "Lewis", "Sam", "Hugo", "extra1", "extra2"];
   var _useState31 = useState([]),
     _useState32 = _slicedToArray(_useState31, 2),
@@ -5627,95 +6150,103 @@ function Breakdown() {
     setOppoName = _useState98[1];
   var _useState99 = useState(""),
     _useState100 = _slicedToArray(_useState99, 2),
-    locationWeather = _useState100[0],
-    setLocationWeather = _useState100[1];
+    customOppo = _useState100[0],
+    setCustomOppo = _useState100[1];
   var _useState101 = useState(""),
     _useState102 = _slicedToArray(_useState101, 2),
-    weather = _useState102[0],
-    setWeather = _useState102[1];
+    customLocation = _useState102[0],
+    setCustomLocation = _useState102[1];
   var _useState103 = useState(""),
     _useState104 = _slicedToArray(_useState103, 2),
-    gameTime = _useState104[0],
-    setGameTime = _useState104[1];
-  var _useState105 = useState(null),
+    locationWeather = _useState104[0],
+    setLocationWeather = _useState104[1];
+  var _useState105 = useState(""),
     _useState106 = _slicedToArray(_useState105, 2),
-    pendingTeam = _useState106[0],
-    setPendingTeam = _useState106[1];
+    weather = _useState106[0],
+    setWeather = _useState106[1];
   var _useState107 = useState(""),
     _useState108 = _slicedToArray(_useState107, 2),
-    scorerName = _useState108[0],
-    setScorerName = _useState108[1];
-  var _useState109 = useState(0),
+    gameTime = _useState108[0],
+    setGameTime = _useState108[1];
+  var _useState109 = useState(null),
     _useState110 = _slicedToArray(_useState109, 2),
-    scoreOppo = _useState110[0],
-    setScoreOppo = _useState110[1];
-  var _useState111 = useState([]),
+    pendingTeam = _useState110[0],
+    setPendingTeam = _useState110[1];
+  var _useState111 = useState(""),
     _useState112 = _slicedToArray(_useState111, 2),
-    scoreHistory = _useState112[0],
-    setScoreHistory = _useState112[1];
-  var _useState113 = useState(null),
+    scorerName = _useState112[0],
+    setScorerName = _useState112[1];
+  var _useState113 = useState(0),
     _useState114 = _slicedToArray(_useState113, 2),
-    awaitConv = _useState114[0],
-    setAwaitConv = _useState114[1];
-  var _useState115 = useState(""),
+    scoreOppo = _useState114[0],
+    setScoreOppo = _useState114[1];
+  var _useState115 = useState([]),
     _useState116 = _slicedToArray(_useState115, 2),
-    convName = _useState116[0],
-    setConvName = _useState116[1];
-  var _useState117 = useState(false),
+    scoreHistory = _useState116[0],
+    setScoreHistory = _useState116[1];
+  var _useState117 = useState(null),
     _useState118 = _slicedToArray(_useState117, 2),
-    halfRunning = _useState118[0],
-    setHalfRunning = _useState118[1];
-  // Interchange timers
-  var _useState119 = useState(false),
+    awaitConv = _useState118[0],
+    setAwaitConv = _useState118[1];
+  var _useState119 = useState(""),
     _useState120 = _slicedToArray(_useState119, 2),
-    subTimer1Active = _useState120[0],
-    setSubTimer1Active = _useState120[1];
-  var _useState121 = useState(300),
+    convName = _useState120[0],
+    setConvName = _useState120[1];
+  var _useState121 = useState(false),
     _useState122 = _slicedToArray(_useState121, 2),
-    subTimer1Time = _useState122[0],
-    setSubTimer1Time = _useState122[1];
-  var _useState123 = useState(""),
+    halfRunning = _useState122[0],
+    setHalfRunning = _useState122[1];
+  // Interchange timers
+  var _useState123 = useState(false),
     _useState124 = _slicedToArray(_useState123, 2),
-    subTimer1Label = _useState124[0],
-    setSubTimer1Label = _useState124[1];
-  var _useState125 = useState(false),
+    subTimer1Active = _useState124[0],
+    setSubTimer1Active = _useState124[1];
+  var _useState125 = useState(300),
     _useState126 = _slicedToArray(_useState125, 2),
-    subTimer2Active = _useState126[0],
-    setSubTimer2Active = _useState126[1];
-  var _useState127 = useState(300),
+    subTimer1Time = _useState126[0],
+    setSubTimer1Time = _useState126[1];
+  var _useState127 = useState(""),
     _useState128 = _slicedToArray(_useState127, 2),
-    subTimer2Time = _useState128[0],
-    setSubTimer2Time = _useState128[1];
-  var _useState129 = useState(""),
+    subTimer1Label = _useState128[0],
+    setSubTimer1Label = _useState128[1];
+  var _useState129 = useState(false),
     _useState130 = _slicedToArray(_useState129, 2),
-    subTimer2Label = _useState130[0],
-    setSubTimer2Label = _useState130[1];
-  var _useState131 = useState(false),
+    subTimer2Active = _useState130[0],
+    setSubTimer2Active = _useState130[1];
+  var _useState131 = useState(300),
     _useState132 = _slicedToArray(_useState131, 2),
-    subTimer3Active = _useState132[0],
-    setSubTimer3Active = _useState132[1];
-  var _useState133 = useState(300),
+    subTimer2Time = _useState132[0],
+    setSubTimer2Time = _useState132[1];
+  var _useState133 = useState(""),
     _useState134 = _slicedToArray(_useState133, 2),
-    subTimer3Time = _useState134[0],
-    setSubTimer3Time = _useState134[1];
-  var _useState135 = useState(""),
+    subTimer2Label = _useState134[0],
+    setSubTimer2Label = _useState134[1];
+  var _useState135 = useState(false),
     _useState136 = _slicedToArray(_useState135, 2),
-    subTimer3Label = _useState136[0],
-    setSubTimer3Label = _useState136[1];
-  var _useState137 = useState(false),
+    subTimer3Active = _useState136[0],
+    setSubTimer3Active = _useState136[1];
+  var _useState137 = useState(300),
     _useState138 = _slicedToArray(_useState137, 2),
-    subTimer4Active = _useState138[0],
-    setSubTimer4Active = _useState138[1];
-  var _useState139 = useState(300),
+    subTimer3Time = _useState138[0],
+    setSubTimer3Time = _useState138[1];
+  var _useState139 = useState(""),
     _useState140 = _slicedToArray(_useState139, 2),
-    subTimer4Time = _useState140[0],
-    setSubTimer4Time = _useState140[1];
-  var _useState141 = useState(""),
+    subTimer3Label = _useState140[0],
+    setSubTimer3Label = _useState140[1];
+  var _useState141 = useState(false),
     _useState142 = _slicedToArray(_useState141, 2),
-    subTimer4Label = _useState142[0],
-    setSubTimer4Label = _useState142[1];
+    subTimer4Active = _useState142[0],
+    setSubTimer4Active = _useState142[1];
+  var _useState143 = useState(300),
+    _useState144 = _slicedToArray(_useState143, 2),
+    subTimer4Time = _useState144[0],
+    setSubTimer4Time = _useState144[1];
+  var _useState145 = useState(""),
+    _useState146 = _slicedToArray(_useState145, 2),
+    subTimer4Label = _useState146[0],
+    setSubTimer4Label = _useState146[1];
   // Interchange tracker
-  var _useState143 = useState(Array.from({
+  var _useState147 = useState(Array.from({
       length: 17
     }, function (_, i) {
       return {
@@ -5726,13 +6257,13 @@ function Breakdown() {
         lastOn: i < 12 ? Date.now() : null
       };
     })),
-    _useState144 = _slicedToArray(_useState143, 2),
-    players = _useState144[0],
-    setPlayers = _useState144[1];
-  var _useState145 = useState(false),
-    _useState146 = _slicedToArray(_useState145, 2),
-    editingRoster = _useState146[0],
-    setEditingRoster = _useState146[1];
+    _useState148 = _slicedToArray(_useState147, 2),
+    players = _useState148[0],
+    setPlayers = _useState148[1];
+  var _useState149 = useState(false),
+    _useState150 = _slicedToArray(_useState149, 2),
+    editingRoster = _useState150[0],
+    setEditingRoster = _useState150[1];
   // Game notes
   // Persistent notes — survive tab switches and page reloads via sessionStorage
   var loadNote = function loadNote(key) {
@@ -5748,170 +6279,170 @@ function Breakdown() {
       sessionStorage.setItem("ww_" + key, val);
     } catch (_unused2) {}
   };
-  var _useState147 = useState(function () {
+  var _useState151 = useState(function () {
       return loadNote("positives");
     }),
-    _useState148 = _slicedToArray(_useState147, 2),
-    positives = _useState148[0],
-    _setPositives = _useState148[1];
+    _useState152 = _slicedToArray(_useState151, 2),
+    positives = _useState152[0],
+    _setPositives = _useState152[1];
   var setPositives = function setPositives(v) {
     _setPositives(v);
     saveNote("positives", v);
   };
-  var _useState149 = useState(function () {
+  var _useState153 = useState(function () {
       return loadNote("workOns");
     }),
-    _useState150 = _slicedToArray(_useState149, 2),
-    workOns = _useState150[0],
-    _setWorkOns = _useState150[1];
+    _useState154 = _slicedToArray(_useState153, 2),
+    workOns = _useState154[0],
+    _setWorkOns = _useState154[1];
   var setWorkOns = function setWorkOns(v) {
     _setWorkOns(v);
     saveNote("workOns", v);
   };
-  var _useState151 = useState(function () {
+  var _useState155 = useState(function () {
       return loadNote("opposition");
     }),
-    _useState152 = _slicedToArray(_useState151, 2),
-    opposition = _useState152[0],
-    _setOpposition = _useState152[1];
+    _useState156 = _slicedToArray(_useState155, 2),
+    opposition = _useState156[0],
+    _setOpposition = _useState156[1];
   var setOpposition = function setOpposition(v) {
     _setOpposition(v);
     saveNote("opposition", v);
   };
-  var _useState153 = useState(function () {
+  var _useState157 = useState(function () {
       return loadNote("gamePlan");
     }),
-    _useState154 = _slicedToArray(_useState153, 2),
-    gamePlan = _useState154[0],
-    _setGamePlan = _useState154[1];
+    _useState158 = _slicedToArray(_useState157, 2),
+    gamePlan = _useState158[0],
+    _setGamePlan = _useState158[1];
   var setGamePlan = function setGamePlan(v) {
     _setGamePlan(v);
     saveNote("gamePlan", v);
   };
-  var _useState155 = useState(function () {
+  var _useState159 = useState(function () {
       return loadNote("highlights");
     }),
-    _useState156 = _slicedToArray(_useState155, 2),
-    highlights = _useState156[0],
-    _setHighlights = _useState156[1];
+    _useState160 = _slicedToArray(_useState159, 2),
+    highlights = _useState160[0],
+    _setHighlights = _useState160[1];
   var setHighlights = function setHighlights(v) {
     _setHighlights(v);
     saveNote("highlights", v);
   };
-  var _useState157 = useState(function () {
+  var _useState161 = useState(function () {
       return loadNote("positives2");
     }),
-    _useState158 = _slicedToArray(_useState157, 2),
-    positives2 = _useState158[0],
-    _setPositives2 = _useState158[1];
+    _useState162 = _slicedToArray(_useState161, 2),
+    positives2 = _useState162[0],
+    _setPositives2 = _useState162[1];
   var setPositives2 = function setPositives2(v) {
     _setPositives2(v);
     saveNote("positives2", v);
   };
-  var _useState159 = useState(function () {
+  var _useState163 = useState(function () {
       return loadNote("workOns2");
     }),
-    _useState160 = _slicedToArray(_useState159, 2),
-    workOns2 = _useState160[0],
-    _setWorkOns2 = _useState160[1];
+    _useState164 = _slicedToArray(_useState163, 2),
+    workOns2 = _useState164[0],
+    _setWorkOns2 = _useState164[1];
   var setWorkOns2 = function setWorkOns2(v) {
     _setWorkOns2(v);
     saveNote("workOns2", v);
   };
-  var _useState161 = useState(function () {
+  var _useState165 = useState(function () {
       return loadNote("opposition2");
     }),
-    _useState162 = _slicedToArray(_useState161, 2),
-    opposition2 = _useState162[0],
-    _setOpposition2 = _useState162[1];
+    _useState166 = _slicedToArray(_useState165, 2),
+    opposition2 = _useState166[0],
+    _setOpposition2 = _useState166[1];
   var setOpposition2 = function setOpposition2(v) {
     _setOpposition2(v);
     saveNote("opposition2", v);
   };
-  var _useState163 = useState(function () {
+  var _useState167 = useState(function () {
       return loadNote("gamePlan2");
     }),
-    _useState164 = _slicedToArray(_useState163, 2),
-    gamePlan2 = _useState164[0],
-    _setGamePlan2 = _useState164[1];
+    _useState168 = _slicedToArray(_useState167, 2),
+    gamePlan2 = _useState168[0],
+    _setGamePlan2 = _useState168[1];
   var setGamePlan2 = function setGamePlan2(v) {
     _setGamePlan2(v);
     saveNote("gamePlan2", v);
   };
-  var _useState165 = useState(function () {
+  var _useState169 = useState(function () {
       return loadNote("highlights2");
     }),
-    _useState166 = _slicedToArray(_useState165, 2),
-    highlights2 = _useState166[0],
-    _setHighlights2 = _useState166[1];
+    _useState170 = _slicedToArray(_useState169, 2),
+    highlights2 = _useState170[0],
+    _setHighlights2 = _useState170[1];
   var setHighlights2 = function setHighlights2(v) {
     _setHighlights2(v);
     saveNote("highlights2", v);
   };
-  var _useState167 = useState(function () {
+  var _useState171 = useState(function () {
       return loadNote("motm");
     }),
-    _useState168 = _slicedToArray(_useState167, 2),
-    motm = _useState168[0],
-    _setMotm = _useState168[1];
+    _useState172 = _slicedToArray(_useState171, 2),
+    motm = _useState172[0],
+    _setMotm = _useState172[1];
   var setMotm = function setMotm(v) {
     _setMotm(v);
     saveNote("motm", v);
   };
-  var _useState169 = useState(function () {
+  var _useState173 = useState(function () {
       return loadNote("motmReason");
     }),
-    _useState170 = _slicedToArray(_useState169, 2),
-    motmReason = _useState170[0],
-    _setMotmReason = _useState170[1];
+    _useState174 = _slicedToArray(_useState173, 2),
+    motmReason = _useState174[0],
+    _setMotmReason = _useState174[1];
   var setMotmReason = function setMotmReason(v) {
     _setMotmReason(v);
     saveNote("motmReason", v);
   };
-  var _useState171 = useState("half"),
-    _useState172 = _slicedToArray(_useState171, 2),
-    notesTab = _useState172[0],
-    setNotesTab = _useState172[1];
-  var _useState173 = useState(function () {
+  var _useState175 = useState("half"),
+    _useState176 = _slicedToArray(_useState175, 2),
+    notesTab = _useState176[0],
+    setNotesTab = _useState176[1];
+  var _useState177 = useState(function () {
       return loadNote("matchSummary");
     }),
-    _useState174 = _slicedToArray(_useState173, 2),
-    matchSummary = _useState174[0],
-    _setMatchSummary = _useState174[1];
+    _useState178 = _slicedToArray(_useState177, 2),
+    matchSummary = _useState178[0],
+    _setMatchSummary = _useState178[1];
   var setMatchSummary = function setMatchSummary(v) {
     _setMatchSummary(v);
     saveNote("matchSummary", v);
   };
-  var _useState175 = useState(false),
-    _useState176 = _slicedToArray(_useState175, 2),
-    summaryLoading = _useState176[0],
-    setSummaryLoading = _useState176[1];
-  var _useState177 = useState(function () {
+  var _useState179 = useState(false),
+    _useState180 = _slicedToArray(_useState179, 2),
+    summaryLoading = _useState180[0],
+    setSummaryLoading = _useState180[1];
+  var _useState181 = useState(function () {
       return loadNote("coachesReport");
     }),
-    _useState178 = _slicedToArray(_useState177, 2),
-    coachesReport = _useState178[0],
-    _setCoachesReport = _useState178[1];
+    _useState182 = _slicedToArray(_useState181, 2),
+    coachesReport = _useState182[0],
+    _setCoachesReport = _useState182[1];
   var setCoachesReport = function setCoachesReport(v) {
     _setCoachesReport(v);
     saveNote("coachesReport", v);
   };
-  var _useState179 = useState(false),
-    _useState180 = _slicedToArray(_useState179, 2),
-    reportLoading = _useState180[0],
-    setReportLoading = _useState180[1];
+  var _useState183 = useState(false),
+    _useState184 = _slicedToArray(_useState183, 2),
+    reportLoading = _useState184[0],
+    setReportLoading = _useState184[1];
   // ── Auto-save game state to localStorage ─────────────────────────────────
   var LS_KEY = "breakdown_game_v1";
 
   // Check for saved game on load
-  var _useState181 = useState(false),
-    _useState182 = _slicedToArray(_useState181, 2),
-    showResume = _useState182[0],
-    setShowResume = _useState182[1];
-  var _useState183 = useState(null),
-    _useState184 = _slicedToArray(_useState183, 2),
-    resumeData = _useState184[0],
-    setResumeData = _useState184[1];
+  var _useState185 = useState(false),
+    _useState186 = _slicedToArray(_useState185, 2),
+    showResume = _useState186[0],
+    setShowResume = _useState186[1];
+  var _useState187 = useState(null),
+    _useState188 = _slicedToArray(_useState187, 2),
+    resumeData = _useState188[0],
+    setResumeData = _useState188[1];
   useEffect(function () {
     try {
       var saved = localStorage.getItem(LS_KEY);
@@ -5927,10 +6458,10 @@ function Breakdown() {
   }, []);
 
   // Visual save indicator
-  var _useState185 = useState(""),
-    _useState186 = _slicedToArray(_useState185, 2),
-    saveIndicator = _useState186[0],
-    setSaveIndicator = _useState186[1];
+  var _useState189 = useState(""),
+    _useState190 = _slicedToArray(_useState189, 2),
+    saveIndicator = _useState190[0],
+    setSaveIndicator = _useState190[1];
   var hasMounted = useRef(false);
   useEffect(function () {
     if (!hasMounted.current) {
@@ -6029,13 +6560,13 @@ function Breakdown() {
     setShowResume(false);
     setResumeData(null);
   };
-  var _useState187 = useState({
+  var _useState191 = useState({
       half: false,
       full: false
     }),
-    _useState188 = _slicedToArray(_useState187, 2),
-    talkingPointsLoading = _useState188[0],
-    setTalkingPointsLoading = _useState188[1];
+    _useState192 = _slicedToArray(_useState191, 2),
+    talkingPointsLoading = _useState192[0],
+    setTalkingPointsLoading = _useState192[1];
   var chatEndRef = useRef(null);
   var sinBinRef = useRef(null);
   var halfRef = useRef(null);
@@ -6362,7 +6893,7 @@ function Breakdown() {
     }
   };
   var generateSummary = /*#__PURE__*/function () {
-    var _ref26 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
+    var _ref28 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(localPlayers) {
       var onFieldCount, playerMins, scorerLog, finalScore, penWon, penLost, fkWon, fkLost, disciplineLog, missedConv, smTurnoverWon, smTurnoverLost, smPosInv, positiveInvolvements, involvementsLog, interchangeSummary, extraPlayersList, prompt, _data$content, res, data, _t;
       return _regenerator().w(function (_context) {
         while (1) switch (_context.p = _context.n) {
@@ -6406,17 +6937,17 @@ function Breakdown() {
             smPosInv = otherEvents.filter(function (e) {
               return e.type === "+";
             }).length; // Positive involvements — player names only for match summary (no counts)
-            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref27) {
-              var _ref28 = _slicedToArray(_ref27, 2),
-                p = _ref28[0],
-                v = _ref28[1];
-              return v > 0;
-            }).sort(function (a, b) {
-              return b[1] - a[1];
-            }).map(function (_ref29) {
+            positiveInvolvements = Object.entries(playerImpact).filter(function (_ref29) {
               var _ref30 = _slicedToArray(_ref29, 2),
                 p = _ref30[0],
                 v = _ref30[1];
+              return v > 0;
+            }).sort(function (a, b) {
+              return b[1] - a[1];
+            }).map(function (_ref31) {
+              var _ref32 = _slicedToArray(_ref31, 2),
+                p = _ref32[0],
+                v = _ref32[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return name;
             });
@@ -6466,11 +6997,11 @@ function Breakdown() {
       }, _callee, null, [[1, 4]]);
     }));
     return function generateSummary(_x) {
-      return _ref26.apply(this, arguments);
+      return _ref28.apply(this, arguments);
     };
   }();
   var generateCoachesReport = /*#__PURE__*/function () {
-    var _ref31 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+    var _ref33 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
       var scorerLog, finalScore, parseMin, isFirstHalf, c, h1, h2, halfStats, h1s, h2s, halfSplit, scrumReasons, loutReasons, scrumDetail, loutDetail, reasonCounts, reasonSummary, allWonEvents, allLostEvents, turnoverWonH1, turnoverWonH2, turnoverLostH1, turnoverLostH2, turnoverWonTotal, turnoverLostTotal, turnoverStr, teamPosH1, teamPosH2, teamNegH1, teamNegH2, teamEffortStr, parseMinCR, crPosH1, crPosH2, avgGapCR, h1GapCR, h2GapCR, effortGapStr, penWon, penLost, fkWon, fkLost, scrumW, scrumL, loutW, loutL, bjruPossSecs, oppoPossSecs, totalPoss, possessionStr, possessionChanges, scoreProgression, missedConvBjru, missedConvOppo, workloadEntries, workloadSummary, sinBinEvents, initial, positivePlayers, involvementsLog, extraPlayersList, captainInitial, prompt, _data$content2, res, data, _t2;
       return _regenerator().w(function (_context2) {
         while (1) switch (_context2.p = _context2.n) {
@@ -6538,16 +7069,16 @@ function Breakdown() {
                 loutReasons[_k] = (loutReasons[_k] || 0) + 1;
               }
             });
-            scrumDetail = Object.entries(scrumReasons).map(function (_ref32) {
-              var _ref33 = _slicedToArray(_ref32, 2),
-                k = _ref33[0],
-                v = _ref33[1];
-              return "".concat(k, ": ").concat(v);
-            }).join(", ") || "no detail";
-            loutDetail = Object.entries(loutReasons).map(function (_ref34) {
+            scrumDetail = Object.entries(scrumReasons).map(function (_ref34) {
               var _ref35 = _slicedToArray(_ref34, 2),
                 k = _ref35[0],
                 v = _ref35[1];
+              return "".concat(k, ": ").concat(v);
+            }).join(", ") || "no detail";
+            loutDetail = Object.entries(loutReasons).map(function (_ref36) {
+              var _ref37 = _slicedToArray(_ref36, 2),
+                k = _ref37[0],
+                v = _ref37[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "no detail"; // ── Discipline breakdown by reason (full) ───────────────────────────────
             reasonCounts = {};
@@ -6557,10 +7088,10 @@ function Breakdown() {
                 reasonCounts[key] = (reasonCounts[key] || 0) + 1;
               }
             });
-            reasonSummary = Object.entries(reasonCounts).map(function (_ref36) {
-              var _ref37 = _slicedToArray(_ref36, 2),
-                k = _ref37[0],
-                v = _ref37[1];
+            reasonSummary = Object.entries(reasonCounts).map(function (_ref38) {
+              var _ref39 = _slicedToArray(_ref38, 2),
+                k = _ref39[0],
+                v = _ref39[1];
               return "".concat(k, ": ").concat(v);
             }).join(", ") || "none recorded"; // ── Turnover totals ─────────────────────────────────────────────────────
             allWonEvents = otherEvents.filter(function (e) {
@@ -6668,10 +7199,10 @@ function Breakdown() {
             missedConvOppo = scoreHistory.filter(function (e) {
               return e.team === "oppo" && e.type === "Miss";
             }).length; // ── Player workload ─────────────────────────────────────────────────────
-            workloadEntries = Object.entries(playerTimers).map(function (_ref38) {
-              var _ref39 = _slicedToArray(_ref38, 2),
-                p = _ref39[0],
-                pt = _ref39[1];
+            workloadEntries = Object.entries(playerTimers).map(function (_ref40) {
+              var _ref41 = _slicedToArray(_ref40, 2),
+                p = _ref41[0],
+                pt = _ref41[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || null : p;
               if (!name) return null;
               var init = name[0] ? name[0].toUpperCase() + "." : "?";
@@ -6686,17 +7217,17 @@ function Breakdown() {
             initial = function initial(name) {
               return name && name[0] ? name[0].toUpperCase() + "." : "?";
             };
-            positivePlayers = Object.entries(playerImpact).filter(function (_ref40) {
-              var _ref41 = _slicedToArray(_ref40, 2),
-                p = _ref41[0],
-                v = _ref41[1];
-              return v > 0;
-            }).sort(function (a, b) {
-              return b[1] - a[1];
-            }).map(function (_ref42) {
+            positivePlayers = Object.entries(playerImpact).filter(function (_ref42) {
               var _ref43 = _slicedToArray(_ref42, 2),
                 p = _ref43[0],
                 v = _ref43[1];
+              return v > 0;
+            }).sort(function (a, b) {
+              return b[1] - a[1];
+            }).map(function (_ref44) {
+              var _ref45 = _slicedToArray(_ref44, 2),
+                p = _ref45[0],
+                v = _ref45[1];
               var name = p === "extra1" || p === "extra2" ? extraNames[p] || p : p;
               return "".concat(initial(name), " (+").concat(v, ")");
             });
@@ -6743,7 +7274,7 @@ function Breakdown() {
       }, _callee2, null, [[1, 4]]);
     }));
     return function generateCoachesReport() {
-      return _ref31.apply(this, arguments);
+      return _ref33.apply(this, arguments);
     };
   }();
   var generateTalkingPoints = function generateTalkingPoints(half) {
@@ -6862,30 +7393,30 @@ function Breakdown() {
       });
     });
   };
-  var _useState189 = useState(false),
-    _useState190 = _slicedToArray(_useState189, 2),
-    postGameLoading = _useState190[0],
-    setPostGameLoading = _useState190[1];
-  var _useState191 = useState(false),
-    _useState192 = _slicedToArray(_useState191, 2),
-    postGameMotmError = _useState192[0],
-    setPostGameMotmError = _useState192[1];
   var _useState193 = useState(false),
     _useState194 = _slicedToArray(_useState193, 2),
-    savedToLog = _useState194[0],
-    setSavedToLog = _useState194[1];
-  var _useState195 = useState(function () {
+    postGameLoading = _useState194[0],
+    setPostGameLoading = _useState194[1];
+  var _useState195 = useState(false),
+    _useState196 = _slicedToArray(_useState195, 2),
+    postGameMotmError = _useState196[0],
+    setPostGameMotmError = _useState196[1];
+  var _useState197 = useState(false),
+    _useState198 = _slicedToArray(_useState197, 2),
+    savedToLog = _useState198[0],
+    setSavedToLog = _useState198[1];
+  var _useState199 = useState(function () {
       return loadNote("socialPost");
     }),
-    _useState196 = _slicedToArray(_useState195, 2),
-    socialPost = _useState196[0],
-    setSocialPost = _useState196[1];
+    _useState200 = _slicedToArray(_useState199, 2),
+    socialPost = _useState200[0],
+    setSocialPost = _useState200[1];
   var setSocialPostPersist = function setSocialPostPersist(v) {
     setSocialPost(v);
     saveNote("socialPost", v);
   };
   var generateSocialPost = /*#__PURE__*/function () {
-    var _ref44 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+    var _ref46 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
       var finalScore, result, penWon, triesW, msgLines, prompt;
       return _regenerator().w(function (_context3) {
         while (1) switch (_context3.n) {
@@ -6928,7 +7459,7 @@ function Breakdown() {
       }, _callee3);
     }));
     return function generateSocialPost() {
-      return _ref44.apply(this, arguments);
+      return _ref46.apply(this, arguments);
     };
   }();
   var generatePostGame = function generatePostGame() {
@@ -7379,7 +7910,7 @@ function Breakdown() {
       setMatchEnded: setMatchEnded,
       showEndConfirm: showEndConfirm,
       setShowEndConfirm: setShowEndConfirm
-    }, _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "matchEnded", matchEnded), "setMatchEnded", setMatchEnded), "showEndConfirm", showEndConfirm), "setShowEndConfirm", setShowEndConfirm), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "sinBinActive", sinBinActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSinBinActive", setSinBinActive), "sinBinTime", sinBinTime), "setSinBinTime", setSinBinTime), "sinBinLabel", sinBinLabel), "setSinBinLabel", setSinBinLabel), "scoreBjru", scoreBjru), "scoreOppo", scoreOppo), "scoreHistory", scoreHistory), "awaitConv", awaitConv), "scoreTry", scoreTry), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "scoreConv", scoreConv), "scoreUndo", scoreUndo), "getStamp", getStamp), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "locationWeather", locationWeather), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setLocationWeather", setLocationWeather), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "extraNames", extraNames), "setExtraNames", setExtraNames), "playerImpact", playerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPlayerImpact", setPlayerImpact), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "positives2", positives2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "highlights", highlights), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHighlights", setHighlights), "subTimer1Active", subTimer1Active), "subTimer1Time", subTimer1Time), "subTimer1Label", subTimer1Label), "setSubTimer1Active", setSubTimer1Active), "setSubTimer1Time", setSubTimer1Time), "setSubTimer1Label", setSubTimer1Label), "subTimer2Active", subTimer2Active), "subTimer2Time", subTimer2Time), "subTimer2Label", subTimer2Label), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSubTimer2Active", setSubTimer2Active), "setSubTimer2Time", setSubTimer2Time), "setSubTimer2Label", setSubTimer2Label), "subTimer3Active", subTimer3Active), "subTimer3Time", subTimer3Time), "subTimer3Label", subTimer3Label), "setSubTimer3Active", setSubTimer3Active), "setSubTimer3Time", setSubTimer3Time), "setSubTimer3Label", setSubTimer3Label), "subTimer4Active", subTimer4Active), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "subTimer4Time", subTimer4Time), "subTimer4Label", subTimer4Label), "setSubTimer4Active", setSubTimer4Active), "setSubTimer4Time", setSubTimer4Time), "setSubTimer4Label", setSubTimer4Label), "setActiveTab", setActiveTab), "notesTab", notesTab), "setNotesTab", setNotesTab), "positives", positives), "setPositives", setPositives), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "workOns", workOns), "setWorkOns", setWorkOns), "motm", motm), "setMotm", setMotm), "motmReason", motmReason), "setMotmReason", setMotmReason), "matchSummary", matchSummary), "summaryLoading", summaryLoading), "generateSummary", generateSummary), "coachesReport", coachesReport), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCoachesReport", setCoachesReport), "reportLoading", reportLoading), "generateCoachesReport", generateCoachesReport), "generateTalkingPoints", generateTalkingPoints), "talkingPointsLoading", talkingPointsLoading), "generatePostGame", generatePostGame), "postGameLoading", postGameLoading), "postGameMotmError", postGameMotmError), "savedToLog", savedToLog), "saveToSeasonLog", saveToSeasonLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "socialPost", socialPost), "setSocialPostPersist", setSocialPostPersist), "saveIndicator", saveIndicator), "expandedRule", expandedRule), "setExpandedRule", setExpandedRule), "expandedStep", expandedStep), "setExpandedStep", setExpandedStep), "expandedComp", expandedComp), "setExpandedComp", setExpandedComp), "expandedRole", expandedRole), _defineProperty(_ctx, "setExpandedRole", setExpandedRole));
+    }, _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "matchEnded", matchEnded), "setMatchEnded", setMatchEnded), "showEndConfirm", showEndConfirm), "setShowEndConfirm", setShowEndConfirm), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "halfExpired", halfExpired), "halfBorderVisible", halfBorderVisible), "setHalfExpired", setHalfExpired), "setHalfBorderVisible", setHalfBorderVisible), "halfSetupFlash", halfSetupFlash), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "halfSetupFlash", halfSetupFlash), "setHalfSetupFlash", setHalfSetupFlash), "halfSetupFlashVisible", halfSetupFlashVisible), "sinExpired", sinExpired), "sinBorderVisible", sinBorderVisible), "setSinExpired", setSinExpired), "setSinBorderVisible", setSinBorderVisible), "sinBinActive", sinBinActive), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSinBinActive", setSinBinActive), "sinBinTime", sinBinTime), "setSinBinTime", setSinBinTime), "sinBinLabel", sinBinLabel), "setSinBinLabel", setSinBinLabel), "scoreBjru", scoreBjru), "scoreOppo", scoreOppo), "scoreHistory", scoreHistory), "awaitConv", awaitConv), "scoreTry", scoreTry), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "scoreConv", scoreConv), "scoreUndo", scoreUndo), "getStamp", getStamp), "oppoName", oppoName), "setOppoName", setOppoName), "discActive", discActive), "setDiscActive", setDiscActive), "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "oppoName", oppoName), "setOppoName", setOppoName), "customOppo", customOppo), "setCustomOppo", setCustomOppo), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "customLocation", customLocation), "setCustomLocation", setCustomLocation), "discActive", discActive), "setDiscActive", setDiscActive), "possession", possession), "setPossession", setPossession), "possessionLog", possessionLog), "setPossessionLog", setPossessionLog), "possessionRef", possessionRef), "defaultSubMins", defaultSubMins), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "defaultSubMins", defaultSubMins), "setDefaultSubMins", setDefaultSubMins), "preGameNotes", preGameNotes), "setPreGameNotes", setPreGameNotes), "captain", captain), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setCaptain", setCaptain), "startingSubs", startingSubs), "setStartingSubs", setStartingSubs), "PLAYERS", PLAYERS), "availablePlayers", availablePlayers), "playerTimers", playerTimers), "setPlayerTimers", setPlayerTimers), "interchangeLog", interchangeLog), "setInterchangeLog", setInterchangeLog), "otherEvents", otherEvents), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setOtherEvents", setOtherEvents), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "extraNames", extraNames), "setExtraNames", setExtraNames), "locationWeather", locationWeather), "setLocationWeather", setLocationWeather), "unavailablePlayers", unavailablePlayers), "setUnavailablePlayers", setUnavailablePlayers), "unavailablePlayers", unavailablePlayers), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setUnavailablePlayers", setUnavailablePlayers), "extraNames", extraNames), "setExtraNames", setExtraNames), "playerImpact", playerImpact), "setPlayerImpact", setPlayerImpact), "otherEvents", otherEvents), "setOtherEvents", setOtherEvents), "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setScorerName", setScorerName), "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "pendingTeam", pendingTeam), "setPendingTeam", setPendingTeam), "scorerName", scorerName), "setScorerName", setScorerName), "confirmTry", confirmTry), "convName", convName), "setConvName", setConvName), "opposition", opposition), "setOpposition", setOpposition), "gamePlan", gamePlan), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setGamePlan", setGamePlan), "highlights", highlights), "setHighlights", setHighlights), "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "positives2", positives2), "setPositives2", setPositives2), "workOns2", workOns2), "setWorkOns2", setWorkOns2), "opposition2", opposition2), "setOpposition2", setOpposition2), "gamePlan2", gamePlan2), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setGamePlan2", setGamePlan2), "highlights2", highlights2), "setHighlights2", setHighlights2), "highlights", highlights), "setHighlights", setHighlights), "subTimer1Active", subTimer1Active), "subTimer1Time", subTimer1Time), "subTimer1Label", subTimer1Label), "setSubTimer1Active", setSubTimer1Active), "setSubTimer1Time", setSubTimer1Time), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSubTimer1Label", setSubTimer1Label), "subTimer2Active", subTimer2Active), "subTimer2Time", subTimer2Time), "subTimer2Label", subTimer2Label), "setSubTimer2Active", setSubTimer2Active), "setSubTimer2Time", setSubTimer2Time), "setSubTimer2Label", setSubTimer2Label), "subTimer3Active", subTimer3Active), "subTimer3Time", subTimer3Time), "subTimer3Label", subTimer3Label), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setSubTimer3Active", setSubTimer3Active), "setSubTimer3Time", setSubTimer3Time), "setSubTimer3Label", setSubTimer3Label), "subTimer4Active", subTimer4Active), "subTimer4Time", subTimer4Time), "subTimer4Label", subTimer4Label), "setSubTimer4Active", setSubTimer4Active), "setSubTimer4Time", setSubTimer4Time), "setSubTimer4Label", setSubTimer4Label), "setActiveTab", setActiveTab), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "notesTab", notesTab), "setNotesTab", setNotesTab), "positives", positives), "setPositives", setPositives), "workOns", workOns), "setWorkOns", setWorkOns), "motm", motm), "setMotm", setMotm), "motmReason", motmReason), "setMotmReason", setMotmReason), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "matchSummary", matchSummary), "summaryLoading", summaryLoading), "generateSummary", generateSummary), "coachesReport", coachesReport), "setCoachesReport", setCoachesReport), "reportLoading", reportLoading), "generateCoachesReport", generateCoachesReport), "generateTalkingPoints", generateTalkingPoints), "talkingPointsLoading", talkingPointsLoading), "generatePostGame", generatePostGame), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "postGameLoading", postGameLoading), "postGameMotmError", postGameMotmError), "savedToLog", savedToLog), "saveToSeasonLog", saveToSeasonLog), "socialPost", socialPost), "setSocialPostPersist", setSocialPostPersist), "saveIndicator", saveIndicator), "expandedRule", expandedRule), "setExpandedRule", setExpandedRule), "expandedStep", expandedStep), _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_ctx, "setExpandedStep", setExpandedStep), "expandedComp", expandedComp), "setExpandedComp", setExpandedComp), "expandedRole", expandedRole), "setExpandedRole", setExpandedRole));
     if (activeTab === "home") return /*#__PURE__*/React.createElement(HomePage, {
       ctx: ctx,
       localPlayers: availablePlayers
@@ -7554,9 +8085,9 @@ function Breakdown() {
       setActiveTab("notes");
       // Auto-recommend MOTM if not already set
       if (!motm) {
-        var topPlayer = Object.entries(playerImpact).filter(function (_ref46) {
-          var _ref47 = _slicedToArray(_ref46, 2),
-            v = _ref47[1];
+        var topPlayer = Object.entries(playerImpact).filter(function (_ref48) {
+          var _ref49 = _slicedToArray(_ref48, 2),
+            v = _ref49[1];
           return v > 0;
         }).sort(function (a, b) {
           return b[1] - a[1];
@@ -7695,6 +8226,8 @@ function Breakdown() {
       setLocationWeather("");
       setWeather("");
       setGameTime("");
+      setCustomOppo("");
+      setCustomLocation("");
       setUnavailablePlayers([]);
       setScrumContested("contested");
       try {
@@ -7894,12 +8427,52 @@ function Breakdown() {
       textTransform: "uppercase",
       marginBottom: 4
     }
-  }, "Opposition"), /*#__PURE__*/React.createElement("input", {
-    value: oppoName,
+  }, "Opposition"), /*#__PURE__*/React.createElement("select", {
+    value: oppoName === customOppo && customOppo ? "Other" : oppoName,
     onChange: function onChange(e) {
-      return setOppoName(e.target.value);
+      if (e.target.value === "Other") {
+        setOppoName(customOppo || "");
+        setLocationWeather("");
+      } else {
+        var club = CLUBS.find(function (c) {
+          return c.name === e.target.value;
+        });
+        setOppoName(e.target.value);
+        setCustomOppo("");
+        if (club && club.ground !== "TBA") setLocationWeather(club.ground);else setLocationWeather("");
+      }
     },
-    placeholder: "e.g. Easts",
+    style: {
+      width: "100%",
+      backgroundColor: t.surface,
+      border: "1px solid ".concat(t.border),
+      borderRadius: 8,
+      padding: "10px 12px",
+      color: oppoName ? t.text : t.muted,
+      fontSize: 14,
+      boxSizing: "border-box",
+      fontFamily: "'Inter', sans-serif",
+      outline: "none",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "\u2014 Select opposition \u2014"), CLUBS.map(function (c) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: c.name,
+      value: c.name
+    }, c.name);
+  }), /*#__PURE__*/React.createElement("option", {
+    value: "Other"
+  }, "Other\u2026")), (!oppoName || !CLUBS.find(function (c) {
+    return c.name === oppoName;
+  })) && /*#__PURE__*/React.createElement("input", {
+    value: customOppo,
+    onChange: function onChange(e) {
+      setCustomOppo(e.target.value);
+      setOppoName(e.target.value);
+    },
+    placeholder: "Enter opposition name\u2026",
     style: {
       width: "100%",
       backgroundColor: t.surface,
@@ -7913,6 +8486,12 @@ function Breakdown() {
       outline: "none",
       marginBottom: 12
     }
+  }), oppoName && CLUBS.find(function (c) {
+    return c.name === oppoName;
+  }) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
@@ -7921,12 +8500,45 @@ function Breakdown() {
       textTransform: "uppercase",
       marginBottom: 4
     }
-  }, "Location"), /*#__PURE__*/React.createElement("input", {
-    value: locationWeather,
+  }, "Location"), /*#__PURE__*/React.createElement("select", {
+    value: locationWeather === customLocation && customLocation ? "Other" : locationWeather,
     onChange: function onChange(e) {
-      return setLocationWeather(e.target.value);
+      if (e.target.value === "Other") {
+        setLocationWeather(customLocation || "");
+      } else {
+        setLocationWeather(e.target.value);
+        setCustomLocation("");
+      }
     },
-    placeholder: "e.g. Birchgrove Oval",
+    style: {
+      width: "100%",
+      backgroundColor: t.surface,
+      border: "1px solid ".concat(t.border),
+      borderRadius: 8,
+      padding: "10px 12px",
+      color: locationWeather ? t.text : t.muted,
+      fontSize: 14,
+      boxSizing: "border-box",
+      fontFamily: "'Inter', sans-serif",
+      outline: "none",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "\u2014 Select ground \u2014"), GROUNDS.map(function (g) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: g,
+      value: g
+    }, g);
+  }), /*#__PURE__*/React.createElement("option", {
+    value: "Other"
+  }, "Other\u2026")), (!locationWeather || !GROUNDS.includes(locationWeather)) && /*#__PURE__*/React.createElement("input", {
+    value: customLocation,
+    onChange: function onChange(e) {
+      setCustomLocation(e.target.value);
+      setLocationWeather(e.target.value);
+    },
+    placeholder: "Enter ground name\u2026",
     style: {
       width: "100%",
       backgroundColor: t.surface,
@@ -7938,6 +8550,10 @@ function Breakdown() {
       boxSizing: "border-box",
       fontFamily: "'Inter', sans-serif",
       outline: "none",
+      marginBottom: 10
+    }
+  }), locationWeather && GROUNDS.includes(locationWeather) && /*#__PURE__*/React.createElement("div", {
+    style: {
       marginBottom: 10
     }
   }), /*#__PURE__*/React.createElement("div", {
@@ -7968,7 +8584,7 @@ function Breakdown() {
     }
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "\u2014 Select time \u2014"), ["8:00am", "8:30am", "9:00am", "9:30am", "10:00am", "10:30am", "11:00am", "11:30am", "12:00pm", "12:30pm", "1:00pm", "1:30pm", "2:00pm", "2:30pm", "3:00pm"].map(function (t2) {
+  }, "\u2014 Select time \u2014"), ["8:00am", "8:05am", "8:10am", "8:15am", "8:20am", "8:25am", "8:30am", "8:35am", "8:40am", "8:45am", "8:50am", "8:55am", "9:00am", "9:05am", "9:10am", "9:15am", "9:20am", "9:25am", "9:30am", "9:35am", "9:40am", "9:45am", "9:50am", "9:55am", "10:00am", "10:05am", "10:10am", "10:15am", "10:20am", "10:25am", "10:30am", "10:35am", "10:40am", "10:45am", "10:50am", "10:55am", "11:00am", "11:05am", "11:10am", "11:15am", "11:20am", "11:25am", "11:30am", "11:35am", "11:40am", "11:45am", "11:50am", "11:55am", "12:00pm"].map(function (t2) {
     return /*#__PURE__*/React.createElement("option", {
       key: t2,
       value: t2
@@ -8109,7 +8725,12 @@ function Breakdown() {
   }, "Captain"), /*#__PURE__*/React.createElement("select", {
     value: captain,
     onChange: function onChange(e) {
-      return setCaptain(e.target.value);
+      setCaptain(e.target.value);
+      setStartingSubs(function (prev) {
+        return prev.filter(function (s) {
+          return s !== e.target.value;
+        });
+      });
     },
     style: {
       width: "100%",
@@ -8133,52 +8754,61 @@ function Breakdown() {
       key: p,
       value: p
     }, p);
-  })), [0, 1, 2, 3].map(function (i) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        marginBottom: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: t.muted,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Sub ", i + 1), /*#__PURE__*/React.createElement("select", {
-      value: startingSubs[i],
-      onChange: function onChange(e) {
-        var n = _toConsumableArray(startingSubs);
-        n[i] = e.target.value;
-        setStartingSubs(n);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: t.muted,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      marginBottom: 6
+    }
+  }, "Starting Subs ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      textTransform: "none"
+    }
+  }, "\u2014 tap to select up to 4")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 6,
+      marginBottom: 8
+    }
+  }, availablePlayers.filter(function (p) {
+    return p !== "extra1" && p !== "extra2" && p !== captain;
+  }).concat([extraNames.extra1 && !unavailablePlayers.includes("extra1") ? extraNames.extra1 : null, extraNames.extra2 && !unavailablePlayers.includes("extra2") ? extraNames.extra2 : null].filter(Boolean)).map(function (p) {
+    var isSelected = startingSubs.includes(p);
+    var isDisabled = !isSelected && startingSubs.filter(Boolean).length >= 4;
+    return /*#__PURE__*/React.createElement("button", {
+      key: p,
+      onClick: function onClick() {
+        if (isDisabled) return;
+        setStartingSubs(function (prev) {
+          return isSelected ? prev.filter(function (s) {
+            return s !== p;
+          }) : [].concat(_toConsumableArray(prev.filter(Boolean)), [p]);
+        });
       },
       style: {
-        width: "100%",
-        backgroundColor: t.surface,
-        border: "1px solid ".concat(t.border),
+        padding: "6px 12px",
+        backgroundColor: isSelected ? t.gold : "transparent",
+        border: "1px solid ".concat(isSelected ? t.gold : isDisabled ? t.border : t.border),
         borderRadius: 8,
-        padding: "10px 12px",
-        color: startingSubs[i] ? t.text : t.muted,
-        fontSize: 14,
-        boxSizing: "border-box",
+        color: isSelected ? "#000" : isDisabled ? t.muted : t.muted,
+        fontSize: 12,
+        fontWeight: isSelected ? 700 : 400,
+        cursor: isDisabled ? "default" : "pointer",
         fontFamily: "'Inter', sans-serif",
-        outline: "none"
+        opacity: isDisabled ? 0.35 : 1
       }
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "\u2014 Select player \u2014"), availablePlayers.filter(function (p) {
-      return p !== "extra1" && p !== "extra2" && p !== captain && !startingSubs.filter(function (_, j) {
-        return j !== i;
-      }).includes(p);
-    }).map(function (p) {
-      return /*#__PURE__*/React.createElement("option", {
-        key: p,
-        value: p
-      }, p);
-    })));
-  }), /*#__PURE__*/React.createElement("div", {
+    }, p);
+  })), startingSubs.filter(Boolean).length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: t.gold,
+      marginBottom: 8
+    }
+  }, "Selected (", startingSubs.filter(Boolean).length, "/4): ", startingSubs.filter(Boolean).join(", ")), /*#__PURE__*/React.createElement("div", {
     style: {
       height: 1,
       backgroundColor: t.border,
@@ -8593,13 +9223,13 @@ function Breakdown() {
 }
 
 // ── Checklist item — derives theme internally from darkMode ──────────────────
-function ChecklistItem(_ref48) {
-  var item = _ref48.item,
-    darkMode = _ref48.darkMode;
-  var _useState197 = useState(false),
-    _useState198 = _slicedToArray(_useState197, 2),
-    checked = _useState198[0],
-    setChecked = _useState198[1];
+function ChecklistItem(_ref50) {
+  var item = _ref50.item,
+    darkMode = _ref50.darkMode;
+  var _useState201 = useState(false),
+    _useState202 = _slicedToArray(_useState201, 2),
+    checked = _useState202[0],
+    setChecked = _useState202[1];
   var gold = darkMode ? "#F5A800" : "#c48400";
   var border = darkMode ? "#2a2a2a" : "#e0e0d8";
   var text = darkMode ? "#f0f0f0" : "#111111";
@@ -8648,19 +9278,19 @@ function ChecklistItem(_ref48) {
 
 // ── AccordionSection ──────────────────────────────────────────────────────────
 // Receives darkMode bool (not t object) to avoid resetting state on every render
-function AccordionSection(_ref49) {
-  var title = _ref49.title,
-    subtitle = _ref49.subtitle,
-    icon = _ref49.icon,
-    numberLabel = _ref49.numberLabel,
-    darkMode = _ref49.darkMode,
-    _ref49$defaultOpen = _ref49.defaultOpen,
-    defaultOpen = _ref49$defaultOpen === void 0 ? false : _ref49$defaultOpen,
-    children = _ref49.children;
-  var _useState199 = useState(defaultOpen),
-    _useState200 = _slicedToArray(_useState199, 2),
-    open = _useState200[0],
-    setOpen = _useState200[1];
+function AccordionSection(_ref51) {
+  var title = _ref51.title,
+    subtitle = _ref51.subtitle,
+    icon = _ref51.icon,
+    numberLabel = _ref51.numberLabel,
+    darkMode = _ref51.darkMode,
+    _ref51$defaultOpen = _ref51.defaultOpen,
+    defaultOpen = _ref51$defaultOpen === void 0 ? false : _ref51$defaultOpen,
+    children = _ref51.children;
+  var _useState203 = useState(defaultOpen),
+    _useState204 = _slicedToArray(_useState203, 2),
+    open = _useState204[0],
+    setOpen = _useState204[1];
   var t = darkMode ? {
     card: "#222222",
     border: "#303030",
@@ -8772,15 +9402,15 @@ function AccordionSection(_ref49) {
 }
 
 // ── ChatModal — stable external component to prevent keyboard dismiss ─────────
-function ChatModal(_ref50) {
-  var chatMessages = _ref50.chatMessages,
-    chatLoading = _ref50.chatLoading,
-    chatEndRef = _ref50.chatEndRef,
-    chatInput = _ref50.chatInput,
-    setChatInput = _ref50.setChatInput,
-    sendChat = _ref50.sendChat,
-    setChatOpen = _ref50.setChatOpen,
-    darkMode = _ref50.darkMode;
+function ChatModal(_ref52) {
+  var chatMessages = _ref52.chatMessages,
+    chatLoading = _ref52.chatLoading,
+    chatEndRef = _ref52.chatEndRef,
+    chatInput = _ref52.chatInput,
+    setChatInput = _ref52.setChatInput,
+    sendChat = _ref52.sendChat,
+    setChatOpen = _ref52.setChatOpen,
+    darkMode = _ref52.darkMode;
   var gold = darkMode ? "#F5A800" : "#c48400";
   var t = darkMode ? {
     bg: "#0d0d0d",
@@ -8975,15 +9605,15 @@ function ChatModal(_ref50) {
 
 // ── SubTimer — stable external component so input never remounts on keypress ──
 // Derives theme internally from darkMode bool — never receives t object as prop
-function SubTimer(_ref51) {
-  var label = _ref51.label,
-    active = _ref51.active,
-    time = _ref51.time,
-    playerLabel = _ref51.playerLabel,
-    setActive = _ref51.setActive,
-    setTime = _ref51.setTime,
-    setLabel = _ref51.setLabel,
-    darkMode = _ref51.darkMode;
+function SubTimer(_ref53) {
+  var label = _ref53.label,
+    active = _ref53.active,
+    time = _ref53.time,
+    playerLabel = _ref53.playerLabel,
+    setActive = _ref53.setActive,
+    setTime = _ref53.setTime,
+    setLabel = _ref53.setLabel,
+    darkMode = _ref53.darkMode;
   var gold = "#F5A800",
     goldDim = "#c48400";
   var c = darkMode ? {
