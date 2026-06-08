@@ -69,7 +69,7 @@ function SplashScreen() {
       letterSpacing: "0.1em",
       marginTop: 16
     }
-  }, "v1.2"));
+  }, "v1.3"));
 }
 
 // Haptic feedback — uses Vibration API where available
@@ -3093,7 +3093,7 @@ function MatchPage(_ref15) {
   });
   var maxAbs = Math.max(Math.abs(Math.min.apply(Math, _toConsumableArray(margins))), Math.abs(Math.max.apply(Math, _toConsumableArray(margins))), 7);
   var W = 320,
-    H = 180;
+    H = 153;
   var PAD = {
     top: 16,
     right: 36,
@@ -3275,12 +3275,12 @@ function MatchPage(_ref15) {
   }))), /*#__PURE__*/React.createElement("path", {
     d: pathD + " L ".concat(xScale(40), " ").concat(zeroY, " L ").concat(PAD.left, " ").concat(zeroY, " Z"),
     fill: t.gold,
-    opacity: 0.08,
+    opacity: 0.15,
     clipPath: "url(#above)"
   }), /*#__PURE__*/React.createElement("path", {
     d: pathD + " L ".concat(xScale(40), " ").concat(zeroY, " L ").concat(PAD.left, " ").concat(zeroY, " Z"),
     fill: "#e03535",
-    opacity: 0.08,
+    opacity: 0.15,
     clipPath: "url(#below)"
   }), /*#__PURE__*/React.createElement("path", {
     d: pathD,
@@ -3623,7 +3623,19 @@ function MatchPage(_ref15) {
         letterSpacing: "0.12em",
         textTransform: "uppercase"
       }
-    }, "Key Metrics")), /*#__PURE__*/React.createElement(MetricRow, {
+    }, "Key Metrics")), function () {
+      var wolvesPos = possessionLog.filter(function (e) {
+        return e.team === "bjru";
+      }).length;
+      var oppoPos = possessionLog.filter(function (e) {
+        return e.team === "oppo";
+      }).length;
+      return /*#__PURE__*/React.createElement(MetricRow, {
+        label: "Possession Periods",
+        wolves: "" + wolvesPos,
+        opp: "" + oppoPos
+      });
+    }(), /*#__PURE__*/React.createElement(MetricRow, {
       label: "Conversion Rate",
       wolves: convRate !== null ? convRate + "%" : "—",
       opp: convsW + "/" + triesW
